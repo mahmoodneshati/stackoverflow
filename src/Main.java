@@ -19,7 +19,6 @@ import java.nio.file.Paths;
  */
 public class Main {
     private final String indexPath;
-    String Tes;
     Analyzer analyzer;
     private Directory fsDir;
     private Directory ramDir;
