@@ -24,7 +24,7 @@ public class Main {
     private Directory ramDir;
     IndexWriter ramWriter, fileWriter;
 
-    int maxInMemoryDoc = 100000;
+    int maxInMemoryDoc = 1000000;
     int countInMemoryDoc = 0;
 
     public void index(String xmlFile) {
@@ -53,8 +53,6 @@ public class Main {
 
 
         ramWriter.close();
-        fsDir = FSDirectory.open(Paths.get(indexPath));
-        fileWriter = new IndexWriter(fsDir, new IndexWriterConfig(analyzer));
         fileWriter.addIndexes(ramDir);
         ramDir.close();
         countInMemoryDoc = 0;
@@ -69,21 +67,18 @@ public class Main {
             ramWriter.addDocument(document);
             countInMemoryDoc++;
         } else {
-            System.out.println("making index for " + countInMemoryDoc +" Documents.");
+            System.out.println("making index for " + countInMemoryDoc + " Documents.");
             // Merge Ram Memory and create a new ram memory
             ramWriter.addDocument(document);
             ramWriter.close();
 
-            fsDir = FSDirectory.open(Paths.get(indexPath));
-            fileWriter = new IndexWriter(fsDir, new IndexWriterConfig(analyzer));
 
             fileWriter.addIndexes(ramDir);
             ramDir.close();
             ramDir = new RAMDirectory();
             ramWriter = new IndexWriter(ramDir, new IndexWriterConfig(analyzer));
             countInMemoryDoc = 0;
-            fileWriter.close();
-            fsDir.close();
+
         }
 
 
@@ -95,6 +90,8 @@ public class Main {
         ramDir = new RAMDirectory();
 
         ramWriter = new IndexWriter(ramDir, new IndexWriterConfig(analyzer));
+        fsDir = FSDirectory.open(Paths.get(indexPath));
+        fileWriter = new IndexWriter(fsDir, new IndexWriterConfig(analyzer));
 
     }
 
@@ -108,7 +105,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException, ParseException {
-        Main m = new Main("E:\\research\\stackoverflow\\index");
+        Main m = new Main(".\\index");
         m.index("Posts1.xml");
     }
 }
