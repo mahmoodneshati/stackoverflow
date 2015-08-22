@@ -20,6 +20,12 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+
+import java.io.IOException;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.Query;
+
 public class SearchIndex {
     public static void main(String[] args) {
         long start = new Date().getTime();
@@ -45,13 +51,14 @@ public class SearchIndex {
             int count=0;
             Date date=new Date();
             Date date1=new Date();
+            SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
             BufferedReader breader = new BufferedReader(new FileReader("Posts1.xml"));
             while ((line = breader.readLine()) != null) {
                 if (line.trim().startsWith("<row")) {
                     count +=1;
                     //if (count>1)
                     //    break;
-                    System.out.println(line);
+                    //System.out.println(line);
                     Elements row = Jsoup.parse(line).getElementsByTag("row");
 
                     Integer PId = getIntegerValue(row, "Id");
@@ -64,7 +71,7 @@ public class SearchIndex {
                     for (int i = 0; i < hits.length; ++i) {
                         int docId = hits[i].doc;
                         Document d = searcher.doc(docId);
-                        System.out.println(d.toString());
+                        //System.out.println(d.toString());
                         List<IndexableField> fields= d.getFields();
                         //System.out.println(FieldName.name()+" "+FieldName.stringValue());
                         for (IndexableField FieldName : fields)
@@ -122,63 +129,56 @@ public class SearchIndex {
                                     if (date==null)
                                         break;
                                     //System.out.println("XML: " + date.toString());
-                                    date1 = DateTools.stringToDate(d.get("CreationDate"));
+                                    date1= formatter.parse(d.get("CreationDate"));
                                     //System.out.println("Doc: " + date1.toString());
-                                    if(date.equals(date1)){
+                                    /*if(date.equals(date1)){
                                         System.out.println("XML Date is equal Doc Date in CreationDate Field");
                                     }else if(date.compareTo(date1)>0){
                                         System.out.println("XML Date is after Doc Date in CreationDate Field");
                                     }else if(date.compareTo(date1)<0){
                                         System.out.println("XML Date is before Doc Date in CreationDate Field");
-                                    }
+                                    }*/
+                                    if(!(date.toString().equalsIgnoreCase(d.get("CreationDate"))))
+                                        System.out.println("Error in CreationDate Field");
                                     break;
                                 case "LastEditDate":
                                     date = getDateValue(row, "LastEditDate");
                                     if (date==null)
                                         break;
                                     //System.out.println("XML: " + date.toString());
-                                    date1 = DateTools.stringToDate(d.get("LastEditDate"));
+                                    date1= formatter.parse(d.get("LastEditDate"));
                                     //System.out.println("Doc: " + date1.toString());
-                                    if(date.equals(date1)){
-                                        System.out.println("XML Date is equal Doc Date in LastEditDate Field");
-                                    }else if(date.compareTo(date1)>0){
-                                        System.out.println("XML Date is after Doc Date in LastEditDate Field");
-                                    }else if(date.compareTo(date1)<0){
-                                        System.out.println("XML Date is before Doc Date in LastEditDate Field");
-                                    }
+                                    if(!(date.toString().equalsIgnoreCase(d.get("LastEditDate"))))
+                                        System.out.println("Error in LastEditDate Field");
                                     break;
                                 case "LastActivityDate":
                                     date = getDateValue(row, "LastActivityDate");
                                     if (date==null)
                                         break;
                                     //System.out.println("XML: " + date.toString());
-                                    date1= DateTools.stringToDate(d.get("LastActivityDate"));
+                                    date1= formatter.parse(d.get("LastActivityDate"));
                                     //System.out.println("Doc: " + date1.toString());
-                                    if(date.equals(date1)){
-                                        System.out.println("XML Date is equal Doc Date in LastActivityDate Field");
-                                    }else if(date.compareTo(date1)>0){
-                                        System.out.println("XML Date is after Doc Date in LastActivityDate Field");
-                                    }else if(date.compareTo(date1)<0){
-                                        System.out.println("XML Date is before Doc Date in LastActivityDate Field");
-                                    }
+                                    if(!(date.toString().equalsIgnoreCase(d.get("LastActivityDate"))))
+                                        System.out.println("Error in LastActivityDate Field");
                                     break;
                                 case "CommunityOwnedDate":
                                     date = getDateValue(row, "CommunityOwnedDate");
                                     if (date==null)
                                         break;
                                     //System.out.println("XML: " + date.toString());
-                                    date1= DateTools.stringToDate(d.get("CommunityOwnedDate"));
+                                    date1= formatter.parse(d.get("CommunityOwnedDate"));
                                     //System.out.println("Doc: " + date1.toString());
-                                    if(date.equals(date1)){
-                                        System.out.println("XML Date is equal Doc Date in CommunityOwnedDate Field");
-                                    }else if(date.compareTo(date1)>0){
-                                        System.out.println("XML Date is after Doc Date in CommunityOwnedDate Field");
-                                    }else if(date.compareTo(date1)<0){
-                                        System.out.println("XML Date is before Doc Date in CommunityOwnedDate Field");
-                                    }
+                                    if(!(date.toString().equalsIgnoreCase(d.get("CommunityOwnedDate"))))
+                                        System.out.println("Error in CommunityOwnedDate Field");
+                                    break;
+                                case "Body":
+                                    break;
+                                case "Title":
+                                    break;
+                                case "Id":
                                     break;
                                 default:
-                                    //System.out.println("Another field name!: "+FieldName.name());
+                                    System.out.println("Another field!: "+FieldName.name());
                                     break;
                             }
 

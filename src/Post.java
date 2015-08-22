@@ -122,9 +122,7 @@ public class Post {
         doc.add(new IntField("ParentId", ParentId != null ? ParentId : -1, Field.Store.YES));
         doc.add(new IntField("AcceptedAnswerId", AcceptedAnswerId != null ? AcceptedAnswerId : -1, Field.Store.YES));
         doc.add(new IntField("AcceptedAnswerId", AcceptedAnswerId != null ? AcceptedAnswerId : -1, Field.Store.YES));
-        doc.add(new StringField("CreationDate",
-                CreationDate!=null?DateTools.dateToString(CreationDate, DateTools.Resolution.MINUTE):"",
-                Field.Store.YES));
+        doc.add(new StringField("CreationDate",CreationDate!=null?CreationDate.toString():"", Field.Store.YES));
         doc.add(new IntField("Score", Score != null ? Score : -1, Field.Store.YES));
         doc.add(new IntField("ViewCount", ViewCount != null ? ViewCount : -1, Field.Store.YES));
         doc.add(new TextField("Body", Body, Field.Store.NO));
@@ -132,12 +130,8 @@ public class Post {
         doc.add(new IntField("LastEditorUserId", LastEditorUserId != null ? LastEditorUserId : -1, Field.Store.YES));
         doc.add(new StringField("LastEditorDisplayName", LastEditorDisplayName != null ? LastEditorDisplayName : "",
                 Field.Store.YES));
-        doc.add(new StringField("LastEditDate",
-                LastEditDate!=null?DateTools.dateToString(LastEditDate, DateTools.Resolution.MINUTE):"",
-                Field.Store.YES));
-        doc.add(new StringField("LastActivityDate",
-                LastActivityDate!=null?DateTools.dateToString(LastActivityDate, DateTools.Resolution.MINUTE):"",
-                Field.Store.YES));
+        doc.add(new StringField("LastEditDate",LastEditDate!=null?LastEditDate.toString():"",Field.Store.YES));
+        doc.add(new StringField("LastActivityDate",LastActivityDate!=null?LastActivityDate.toString():"",Field.Store.YES));
         doc.add(new TextField("Title", Title, Field.Store.NO));
 
         for (String tag : Tags) {
@@ -146,9 +140,7 @@ public class Post {
         doc.add(new IntField("AnswerCount", AnswerCount != null ? AnswerCount : -1, Field.Store.YES));
         doc.add(new IntField("CommentCount", CommentCount != null ? CommentCount : -1, Field.Store.YES));
         doc.add(new IntField("FavoriteCount", FavoriteCount != null ? FavoriteCount : -1, Field.Store.YES));
-        doc.add(new StringField("CommunityOwnedDate",
-                CommunityOwnedDate!=null?DateTools.dateToString(CommunityOwnedDate, DateTools.Resolution.MINUTE):"",
-                Field.Store.YES));
+        doc.add(new StringField("CommunityOwnedDate",CommunityOwnedDate!=null?CommunityOwnedDate.toString():"",Field.Store.YES));
 
         return doc;
     }
