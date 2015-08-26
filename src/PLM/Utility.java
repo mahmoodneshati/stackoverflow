@@ -34,25 +34,26 @@ public class Utility {
         String indexDir = "index2";
         Utility u = new Utility();
 
-        u.getPostIDsWithSpecificTag("<c#>", indexDir);
+        u.getPostIDsBySpecificTag("<c#>", indexDir);
+        u.getPostIDsBySpecificWord("standard", indexDir);
     }
     public Utility() {
 
     }
-    public ArrayList<Integer> getPostIDsWithSpecificTag(String tag, String IndexDir){
+    public ArrayList<Integer> getPostIDsBySpecificTag(String tag, String IndexDir){
         try {
             ArrayList<Integer> PIDs= new ArrayList<Integer>();
             IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
             IndexSearcher searcher = new IndexSearcher(reader);
             Query query = new WildcardQuery(new Term("Tags", "*"+tag+"*"));
             TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
-            //System.out.println(hits.totalHits+" total matching documents");
+            System.out.println(hits.totalHits+" total matching documents with "+tag+" tag");
 
             ScoreDoc[] ScDocs = hits.scoreDocs;
             for (int i = 0; i < ScDocs.length; ++i) {
                 int docId = ScDocs[i].doc;
                 Document d = searcher.doc(docId);
-                //System.out.println(d.get("Id"));
+                System.out.println("Post Id:"+d.get("Id"));
                 PIDs.add(Integer.parseInt(d.get("Id")));
             }
 
@@ -63,4 +64,32 @@ public class Utility {
 
         return null;
     }
+
+    public ArrayList<Integer> getPostIDsBySpecificWord(String word, String IndexDir){
+        try {
+            ArrayList<Integer> PIDs= new ArrayList<Integer>();
+            IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
+            IndexSearcher searcher = new IndexSearcher(reader);
+            Query query = new WildcardQuery(new Term("Body", "*"+word+"*"));
+            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
+            System.out.println(hits.totalHits+" total matching documents contain "+word+" word");
+
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                System.out.println("Post Id:"+d.get("Id"));
+                PIDs.add(Integer.parseInt(d.get("Id")));
+            }
+
+            return PIDs;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+
+
 }
