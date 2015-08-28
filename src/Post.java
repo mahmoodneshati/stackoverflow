@@ -63,7 +63,6 @@ public class Post {
         FavoriteCount = getIntegerValue(row, "FavoriteCount");
         CommunityOwnedDate = getDateValue(row, "CommunityOwnedDate");
 
-
     }
 
     private ArrayList<String> getStringList(Elements row, String tag) {
@@ -151,9 +150,13 @@ public class Post {
         Field field2 = new Field("Title", Title, type);
         doc.add(field2);
 
-        for (String tag : Tags) {
-            doc.add(new StringField("Tags", tag, Field.Store.YES));
+        if(Tags.size()==0)
+            doc.add(new StringField("Tags", "", Field.Store.YES));
+        else{
+            for (String tag : Tags)
+                doc.add(new StringField("Tags", tag, Field.Store.YES));
         }
+
         doc.add(new IntField("AnswerCount", AnswerCount != null ? AnswerCount : -1, Field.Store.YES));
         doc.add(new IntField("CommentCount", CommentCount != null ? CommentCount : -1, Field.Store.YES));
         doc.add(new IntField("FavoriteCount", FavoriteCount != null ? FavoriteCount : -1, Field.Store.YES));

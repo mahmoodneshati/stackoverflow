@@ -40,30 +40,33 @@ public class Utility {
         Utility u = new Utility();
 
         ArrayList<Integer> PIds = new ArrayList<Integer>();
-        PIds = u.getIntegerResults(u.getPostIDsByTag("<c#>"));
-        PIds = u.getIntegerResults(u.getPostIDsByWordOfBody("standard"));
-        PIds = u.getIntegerResults(u.BooleanQueryOr(u.getPostIDsByTag("<c#>"), u.getPostIDsByWordOfBody("standard")));
+        PIds = u.getPostIDs(u.SearchTag("<c#>"));
+        PIds = u.getPostIDs(u.SearchBody("standard"));
+        PIds = u.getPostIDs(u.BooleanQueryOr(u.SearchTag("<c#>"), u.SearchBody("standard")));
 
-        PIds = u.getIntegerResults(u.getPostIDsByTag("<html>"));
-        PIds = u.getIntegerResults(u.getPostIDsByWordOfBody("standard"));
-        PIds = u.getIntegerResults(u.BooleanQueryAnd(u.getPostIDsByTag("<html>"), u.getPostIDsByWordOfBody("standard")));
+        PIds = u.getPostIDs(u.SearchTag("<html>"));
+        PIds = u.getPostIDs(u.SearchBody("standard"));
+        PIds = u.getPostIDs(u.BooleanQueryAnd(u.SearchTag("<html>"), u.SearchBody("standard")));
 
-        PIds = u.getIntegerResults(u.getPostIDsByWordOfTitle("MySQL"));
-        PIds = u.getIntegerResults(u.getPostIDsByWordOfTitle("Binary"));
-        PIds = u.getIntegerResults(u.getPostIDsByOwnerUserId(1));
+        PIds = u.getPostIDs(u.SearchTitle("MySQL"));
+        PIds = u.getPostIDs(u.SearchTitle("Binary"));
+        PIds = u.getPostIDs(u.SearchOwnerUserId(1));
 
         ArrayList<String> BodyTerms = new ArrayList<String>();
-        BodyTerms = u.getStringResults(u.getBodyTermsByPostId(4),"Body");
+        BodyTerms = u.getTerms(u.SearchPostId(4), "Body");
         ArrayList<String> TitleTerms = new ArrayList<String>();
-        TitleTerms = u.getStringResults(u.getTiTleTermsByPostId(4), "Title");
+        TitleTerms = u.getTerms(u.SearchPostId(4), "Title");
 
-        PIds = u.getIntegerResults(u.getPostIDsByCreationDateRange("2008-07-31", "2008-08-01"));
-        PIds = u.getIntegerResults(u.getPostIDsByCreationDateRange2("2008-07-31", "2008-08-01"));
-
+        //???
+        PIds = u.getPostIDs(u.SearchCreationDateRange("2008-07-31", "2008-08-01"));
+        PIds = u.getPostIDs(u.SearchCreationDateRange2("2008-07-31", "2008-08-01"));
 
         u.getFreqOfWordInBody("return");
-        u.getDocCountByTag("<c#>");
+        u.getDocCount(u.SearchTag("<c#>"));
         u.getDocCountByWordInBody("standard");
+        u.getDocCount(u.SearchBody("standard"));
+
+        //???
         u.getDocCountByWordInTitle("Binary");
         u.getDocCountByWordInTitle("MySQL");
     }
@@ -79,16 +82,16 @@ public class Utility {
     }
 
     //1
-    public Query getPostIDsByTag(String tag){
-        System.out.println("Searching for Post IDs with "+tag+" tag ...");
+    public Query SearchTag(String tag){
+        System.out.println("Searching for "+tag+" tag ...");
         Query query = new WildcardQuery(new Term("Tags", "*"+tag+"*"));
         return query;
     }
 
     //2
-    public Query getPostIDsByWordOfBody(String word){
+    public Query SearchBody(String word){
         try {
-            System.out.println("Searching for Post IDs contain "+word+" word in Body field ...");
+            System.out.println("Searching for "+word+" in Body field ...");
             Analyzer analyzer = new StandardAnalyzer();
             QueryParser parser = new QueryParser("Body", analyzer);
             Query query = parser.parse("Body:"+word);
@@ -99,9 +102,9 @@ public class Utility {
         return null;
     }
     //2
-    public Query getPostIDsByWordOfTitle(String word){
+    public Query SearchTitle(String word){
         try {
-            System.out.println("Searching for Post IDs contain "+word+" word in Title field ...");
+            System.out.println("Searching for "+word+" in Title field ...");
             Analyzer analyzer = new StandardAnalyzer();
             QueryParser parser = new QueryParser("Title", analyzer);
             Query query = parser.parse("Title:"+word);
@@ -113,29 +116,22 @@ public class Utility {
     }
 
     //3
-    public Query getPostIDsByOwnerUserId(Integer UsersID){
-        System.out.println("Searching for Post IDs with "+UsersID+" as OwnerUserID...");
+    public Query SearchOwnerUserId(Integer UsersID){
+        System.out.println("Searching for "+UsersID+" as OwnerUserID...");
         Query query = NumericRangeQuery.newIntRange("OwnerUserId", UsersID, UsersID,true,true);
         return query;
     }
 
     //4
-    public Query getBodyTermsByPostId(Integer PostID){
-        System.out.println("Searching for Body Terms By "+PostID+" as Post ID...");
-        Query query = NumericRangeQuery.newIntRange("Id", PostID, PostID,true,true);
-        return query;
-    }
-
-    //4
-    public Query getTiTleTermsByPostId(Integer PostID){
-        System.out.println("Searching for Title Terms By "+PostID+" as Post ID...");
+    public Query SearchPostId(Integer PostID){
+        System.out.println("Searching for "+PostID+" as Post ID...");
         Query query = NumericRangeQuery.newIntRange("Id", PostID, PostID,true,true);
         return query;
     }
 
     //5
-    public Query getPostIDsByCreationDateRange(String lower, String upper){
-        System.out.println("Searching for Post IDs By CreationDate Range:["+lower+" TO "+upper+"]");
+    public Query SearchCreationDateRange(String lower, String upper){
+        System.out.println("Searching for CreationDate Range:["+lower+" TO "+upper+"]");
         BytesRef lowerBR = new BytesRef(lower);
         BytesRef upperBR = new BytesRef(upper);
         Query query = new TermRangeQuery("CreationDate", lowerBR, upperBR, true, true);
@@ -143,7 +139,7 @@ public class Utility {
     }
 
     //5
-    public Query getPostIDsByCreationDateRange2(String lower, String upper){
+    public Query SearchCreationDateRange2(String lower, String upper){
         try {
             System.out.println("2*: Searching for Post IDs By CreationDate Range:["+lower+" TO "+upper+"]");
             Analyzer analyzer = new StandardAnalyzer();
@@ -156,9 +152,16 @@ public class Utility {
         return null;
     }
 
+    public Query SearchCreationDate(int year) {
+        BytesRef lowerBR = new BytesRef(String.valueOf(year));
+        BytesRef upperBR = new BytesRef(String.valueOf(year+1));
+        Query query = new TermRangeQuery("CreationDate", lowerBR, upperBR, true, true);
+        return query;
+    }
+
     //6
     public BooleanQuery BooleanQueryOr(Query q1, Query q2){
-        System.out.println("OR Operation:");
+        //System.out.println("OR Operation:");
         BooleanQuery query = new BooleanQuery();
         query.add(q1, BooleanClause.Occur.SHOULD);
         query.add(q2, BooleanClause.Occur.SHOULD);
@@ -167,7 +170,7 @@ public class Utility {
 
     //6
     public BooleanQuery BooleanQueryAnd(Query q1, Query q2){
-        System.out.println("AND Operation:");
+        //System.out.println("AND Operation:");
         BooleanQuery query = new BooleanQuery();
         query.add(q1, BooleanClause.Occur.MUST);
         query.add(q2, BooleanClause.Occur.MUST);
@@ -188,7 +191,7 @@ public class Utility {
             for (int i = 0; i < ScDocs.length; ++i) {
                 int docId = ScDocs[i].doc;
                 Document d = searcher.doc(docId);
-                System.out.println(d.toString());
+                //System.out.println(d.toString());
                 Terms terms = reader.getTermVector(docId, "Body"); //get terms vectors for one document and one field
                 if (terms != null && terms.size() > 0) {
                     TermsEnum termsEnum = terms.iterator(); // access the terms for this field
@@ -197,7 +200,7 @@ public class Utility {
                         final String keyword = term.utf8ToString();
                         long termFreq = termsEnum.totalTermFreq();
                         if(keyword.equalsIgnoreCase(word))
-                        System.out.println("term: "+keyword+", termFreq = "+termFreq);
+                        System.out.println("DocID: "+d.get("Id")+", term: "+keyword+", termFreq = "+termFreq);
                     }
                 }
             }
@@ -232,21 +235,9 @@ public class Utility {
     }
 
     //8
-    public Integer getDocCountByTag(String tag){
-        try{
-            Query query = new WildcardQuery(new Term("Tags", "*"+tag+"*"));
-            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
-            return hits.totalHits;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return -1;
-    }
-
-    //8
     public Integer getDocCountByWordInBody(String word){
         try{
-            System.out.println(word+" occur in Body of "+reader.docFreq(new Term("Body", word))+" document");
+            System.out.println(word+" occurs in Body of "+reader.docFreq(new Term("Body", word))+" document");
             return reader.docFreq(new Term("Body",word));
         } catch (IOException e) {
             e.printStackTrace();
@@ -259,7 +250,7 @@ public class Utility {
         try{
             Analyzer analyzer = new StandardAnalyzer();
             QueryParser parser = new QueryParser("Title", analyzer);
-            Query query = parser.parse("Title:"+word);
+            Query query = parser.parse("Title:" + word);
             TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
             //!!!!!!!!!!!!!!!!!!!!
             System.out.println(word+" occur in Title of "+hits.totalHits+" document");
@@ -273,7 +264,18 @@ public class Utility {
         return -1;
     }
 
-    public ArrayList<Integer> getIntegerResults(Query q){
+    public Integer getDocCount(Query q){
+        try {
+            TopDocs hits = searcher.search(q, Integer.MAX_VALUE);
+            System.out.println(hits.totalHits+" total matching documents");
+            return hits.totalHits;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public ArrayList<Integer> getPostIDs(Query q){
         try {
             ArrayList<Integer> PIDs= new ArrayList<Integer>();
             TopDocs hits = searcher.search(q, Integer.MAX_VALUE);
@@ -293,7 +295,7 @@ public class Utility {
         return null;
     }
 
-    public ArrayList<String> getStringResults(Query q,String field){
+    public ArrayList<String> getTerms(Query q,String field){
         try {
             ArrayList<String> STerms= new ArrayList<String>();
             TopDocs hits = searcher.search(q, Integer.MAX_VALUE);
