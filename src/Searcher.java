@@ -54,7 +54,23 @@ public class Searcher {
                     TermsEnum termsEnum = terms.iterator(); // access the terms for this field
                     BytesRef term = null;
                     while((term = termsEnum.next()) != null) {
-                        System.out.println(term.utf8ToString());
+                        final String keyword = term.utf8ToString();
+                        long termFreq = termsEnum.totalTermFreq();
+                        System.out.println("term: "+keyword+", termFreq = "+termFreq);
+
+                    }
+                }
+
+                Terms terms2 = reader.getTermVector(i, "Title"); //get terms vectors for one document and one field
+                System.out.println("Title Terms:");
+                if (terms != null && terms.size() > 0) {
+                    TermsEnum termsEnum = terms.iterator(); // access the terms for this field
+                    BytesRef term = null;
+                    while((term = termsEnum.next()) != null) {
+                        final String keyword = term.utf8ToString();
+                        long termFreq = termsEnum.totalTermFreq();
+                        System.out.println("term: "+keyword+", termFreq = "+termFreq);
+
                     }
                 }
             }

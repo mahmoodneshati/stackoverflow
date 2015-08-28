@@ -11,6 +11,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.apache.lucene.document.*;
@@ -48,10 +49,7 @@ public class Utility {
         PIds = u.getIntegerResults(u.BooleanQueryAnd(u.getPostIDsByTag("<html>"), u.getPostIDsByWordOfBody("standard")));
 
         PIds = u.getIntegerResults(u.getPostIDsByWordOfTitle("MySQL"));
-        PIds = u.getIntegerResults(u.getPostIDsByWordOfTitle2("MySQL"));
         PIds = u.getIntegerResults(u.getPostIDsByWordOfTitle("Binary"));
-        PIds = u.getIntegerResults(u.getPostIDsByWordOfTitle2("Binary"));
-
         PIds = u.getIntegerResults(u.getPostIDsByOwnerUserId(1));
 
         ArrayList<String> BodyTerms = new ArrayList<String>();
@@ -62,6 +60,12 @@ public class Utility {
         PIds = u.getIntegerResults(u.getPostIDsByCreationDateRange("2008-07-31", "2008-08-01"));
         PIds = u.getIntegerResults(u.getPostIDsByCreationDateRange2("2008-07-31", "2008-08-01"));
 
+
+        u.getFreqOfWordInBody("return");
+        u.getDocCountByTag("<c#>");
+        u.getDocCountByWordInBody("standard");
+        u.getDocCountByWordInTitle("Binary");
+        u.getDocCountByWordInTitle("MySQL");
     }
 
     public Utility() {
@@ -83,20 +87,19 @@ public class Utility {
 
     //2
     public Query getPostIDsByWordOfBody(String word){
-        System.out.println("Searching for Post IDs contain "+word+" word in Body field ...");
-        Query query = new WildcardQuery(new Term("Body", "*"+word+"*"));
-        return query;
+        try {
+            System.out.println("Searching for Post IDs contain "+word+" word in Body field ...");
+            Analyzer analyzer = new StandardAnalyzer();
+            QueryParser parser = new QueryParser("Body", analyzer);
+            Query query = parser.parse("Body:"+word);
+            return query;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
-
     //2
     public Query getPostIDsByWordOfTitle(String word){
-        System.out.println("Searching for Post IDs contain "+word+" word in Title field ...");
-        Query query = new WildcardQuery(new Term("Title", "*"+word+"*"));
-        return query;
-    }
-
-    //2
-    public Query getPostIDsByWordOfTitle2(String word){
         try {
             System.out.println("Searching for Post IDs contain "+word+" word in Title field ...");
             Analyzer analyzer = new StandardAnalyzer();
@@ -155,7 +158,7 @@ public class Utility {
 
     //6
     public BooleanQuery BooleanQueryOr(Query q1, Query q2){
-        System.out.println("OR Operation of:");
+        System.out.println("OR Operation:");
         BooleanQuery query = new BooleanQuery();
         query.add(q1, BooleanClause.Occur.SHOULD);
         query.add(q2, BooleanClause.Occur.SHOULD);
@@ -164,11 +167,110 @@ public class Utility {
 
     //6
     public BooleanQuery BooleanQueryAnd(Query q1, Query q2){
-        System.out.println("AND Operation of:");
+        System.out.println("AND Operation:");
         BooleanQuery query = new BooleanQuery();
         query.add(q1, BooleanClause.Occur.MUST);
         query.add(q2, BooleanClause.Occur.MUST);
         return query;
+    }
+
+    //7
+    public void getFreqOfWordInBody(String word){
+        try {
+            //System.out.println(reader.docFreq(new Term("Body", word)));
+            Analyzer analyzer = new StandardAnalyzer();
+            QueryParser parser = new QueryParser("Body", analyzer);
+            Query query = parser.parse("Body:" + word);
+
+            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
+            System.out.println(hits.totalHits+" total matching documents");
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                System.out.println(d.toString());
+                Terms terms = reader.getTermVector(docId, "Body"); //get terms vectors for one document and one field
+                if (terms != null && terms.size() > 0) {
+                    TermsEnum termsEnum = terms.iterator(); // access the terms for this field
+                    BytesRef term = null;
+                    while((term = termsEnum.next()) != null) {
+                        final String keyword = term.utf8ToString();
+                        long termFreq = termsEnum.totalTermFreq();
+                        if(keyword.equalsIgnoreCase(word))
+                        System.out.println("term: "+keyword+", termFreq = "+termFreq);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //7
+    public long getFreqOfWordInBody(Integer DocID, String word){
+        try {
+            Terms terms = reader.getTermVector(DocID, "Body"); //get terms vectors for one document and one field
+            if (terms != null && terms.size() > 0) {
+                TermsEnum termsEnum = terms.iterator(); // access the terms for this field
+                BytesRef term = null;
+                while((term = termsEnum.next()) != null) {
+                    final String keyword = term.utf8ToString();
+                    long termFreq = termsEnum.totalTermFreq();
+                    if(keyword.equalsIgnoreCase(word)){
+                        System.out.println("term: "+keyword+", termFreq = "+termFreq);
+                        return termFreq;
+                    }
+
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    //8
+    public Integer getDocCountByTag(String tag){
+        try{
+            Query query = new WildcardQuery(new Term("Tags", "*"+tag+"*"));
+            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
+            return hits.totalHits;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    //8
+    public Integer getDocCountByWordInBody(String word){
+        try{
+            System.out.println(word+" occur in Body of "+reader.docFreq(new Term("Body", word))+" document");
+            return reader.docFreq(new Term("Body",word));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    //8
+    public Integer getDocCountByWordInTitle(String word) {
+        try{
+            Analyzer analyzer = new StandardAnalyzer();
+            QueryParser parser = new QueryParser("Title", analyzer);
+            Query query = parser.parse("Title:"+word);
+            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
+            //!!!!!!!!!!!!!!!!!!!!
+            System.out.println(word+" occur in Title of "+hits.totalHits+" document");
+            System.out.println(word+" occur in Title of "+reader.docFreq(new Term("Title", word))+" document");
+            return reader.docFreq(new Term("Title",word));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     public ArrayList<Integer> getIntegerResults(Query q){
