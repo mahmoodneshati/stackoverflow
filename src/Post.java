@@ -1,4 +1,5 @@
 import org.apache.lucene.document.*;
+import org.apache.lucene.index.IndexOptions;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 
@@ -11,6 +12,7 @@ import java.util.Date;
  * Google
  */
 public class Post {
+    SimpleDateFormat formatter;
     public Integer Id;
     public Integer PostTypeId;
     public Integer ParentId;
@@ -20,10 +22,12 @@ public class Post {
     public Integer ViewCount;
     public String Body;
     public Integer OwnerUserId;
+    public String OwnerDisplayName;
     public Integer LastEditorUserId;
     public String LastEditorDisplayName;
     public Date LastEditDate;
     public Date LastActivityDate;
+    public Date ClosedDate;
     public String Title;
     public ArrayList<String> Tags;
     public Integer AnswerCount;
@@ -33,6 +37,8 @@ public class Post {
 
 
     public Post(String xmlLine) {
+        formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
         Elements row = Jsoup.parse(xmlLine).getElementsByTag("row");
 
         Id = getIntegerValue(row, "Id");
@@ -44,10 +50,12 @@ public class Post {
         ViewCount = getIntegerValue(row, "ViewCount");
         Body = getStringValue(row, "Body");
         OwnerUserId = getIntegerValue(row, "OwnerUserId");
+        OwnerDisplayName = getStringValue(row, "OwnerDisplayName");
         LastEditorUserId = getIntegerValue(row, "LastEditorUserId");
         LastEditorDisplayName = getStringValue(row, "LastEditorDisplayName");
         LastEditDate = getDateValue(row, "LastEditDate");
         LastActivityDate = getDateValue(row, "LastActivityDate");
+        ClosedDate = getDateValue(row, "LastActivityDate");
         Title = getStringValue(row, "Title");
         Tags = getStringList(row, "Tags");
         AnswerCount = getIntegerValue(row, "AnswerCount");
@@ -86,9 +94,7 @@ public class Post {
     private Date getDateValue(Elements row, String tag) {
         Date date;
         try {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
             date = formatter.parse(row.attr(tag));
-
 
         } catch (Exception e) {
             date = null;
@@ -117,22 +123,33 @@ public class Post {
 
     public Document getLuceneDocument() {
         Document doc = new Document();
+        FieldType type = new FieldType();
+        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        type.setTokenized(true);
+        type.setStored(false);
+        type.setStoreTermVectors(true);
+        type.setStoreTermVectorPositions(true);
+        type.freeze();
         doc.add(new IntField("Id", Id != null ? Id : -1, Field.Store.YES));
         doc.add(new IntField("PostTypeId", PostTypeId != null ? PostTypeId : -1, Field.Store.YES));
         doc.add(new IntField("ParentId", ParentId != null ? ParentId : -1, Field.Store.YES));
         doc.add(new IntField("AcceptedAnswerId", AcceptedAnswerId != null ? AcceptedAnswerId : -1, Field.Store.YES));
-        doc.add(new IntField("AcceptedAnswerId", AcceptedAnswerId != null ? AcceptedAnswerId : -1, Field.Store.YES));
-        doc.add(new StringField("CreationDate",CreationDate!=null?CreationDate.toString():"", Field.Store.YES));
+        doc.add(new StringField("CreationDate",CreationDate!=null?formatter.format(CreationDate):"", Field.Store.YES));
         doc.add(new IntField("Score", Score != null ? Score : -1, Field.Store.YES));
         doc.add(new IntField("ViewCount", ViewCount != null ? ViewCount : -1, Field.Store.YES));
-        doc.add(new TextField("Body", Body, Field.Store.NO));
+        Field field = new Field("Body", Body, type);
+        doc.add(field);
         doc.add(new IntField("OwnerUserId", OwnerUserId != null ? OwnerUserId : -1, Field.Store.YES));
+        doc.add(new StringField("OwnerDisplayName", OwnerDisplayName != null ? OwnerDisplayName : "",
+                Field.Store.YES));
         doc.add(new IntField("LastEditorUserId", LastEditorUserId != null ? LastEditorUserId : -1, Field.Store.YES));
         doc.add(new StringField("LastEditorDisplayName", LastEditorDisplayName != null ? LastEditorDisplayName : "",
                 Field.Store.YES));
-        doc.add(new StringField("LastEditDate",LastEditDate!=null?LastEditDate.toString():"",Field.Store.YES));
-        doc.add(new StringField("LastActivityDate",LastActivityDate!=null?LastActivityDate.toString():"",Field.Store.YES));
-        doc.add(new TextField("Title", Title, Field.Store.NO));
+        doc.add(new StringField("LastEditDate",LastEditDate!=null?formatter.format(LastEditDate):"",Field.Store.YES));
+        doc.add(new StringField("LastActivityDate",LastActivityDate!=null?formatter.format(LastActivityDate):"",Field.Store.YES));
+        doc.add(new StringField("ClosedDate",ClosedDate!=null?formatter.format(ClosedDate):"",Field.Store.YES));
+        Field field2 = new Field("Title", Title, type);
+        doc.add(field2);
 
         for (String tag : Tags) {
             doc.add(new StringField("Tags", tag, Field.Store.YES));
@@ -140,8 +157,9 @@ public class Post {
         doc.add(new IntField("AnswerCount", AnswerCount != null ? AnswerCount : -1, Field.Store.YES));
         doc.add(new IntField("CommentCount", CommentCount != null ? CommentCount : -1, Field.Store.YES));
         doc.add(new IntField("FavoriteCount", FavoriteCount != null ? FavoriteCount : -1, Field.Store.YES));
-        doc.add(new StringField("CommunityOwnedDate",CommunityOwnedDate!=null?CommunityOwnedDate.toString():"",Field.Store.YES));
+        doc.add(new StringField("CommunityOwnedDate",CommunityOwnedDate!=null?formatter.format(CommunityOwnedDate):"",Field.Store.YES));
 
         return doc;
     }
 }
+

@@ -27,6 +27,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
 
 public class SearchIndex {
+    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
     public static void main(String[] args) {
         long start = new Date().getTime();
 
@@ -38,7 +40,7 @@ public class SearchIndex {
 
     public SearchIndex() {
         try {
-            String indexDir = "index";
+            String indexDir = "index2";
             String q = "";
 
             IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDir)));
@@ -51,7 +53,6 @@ public class SearchIndex {
             int count=0;
             Date date=new Date();
             Date date1=new Date();
-            SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
             BufferedReader breader = new BufferedReader(new FileReader("Posts1.xml"));
             while ((line = breader.readLine()) != null) {
                 if (line.trim().startsWith("<row")) {
@@ -120,56 +121,43 @@ public class SearchIndex {
                                     if (!(getStringValue(row, "LastEditorDisplayName").equalsIgnoreCase(d.get("LastEditorDisplayName"))))
                                         System.out.println("Error in LastEditorDisplayName Field");
                                     break;
+                                case "OwnerDisplayName":
+                                    if (!(getStringValue(row, "OwnerDisplayName").equalsIgnoreCase(d.get("OwnerDisplayName"))))
+                                        System.out.println("Error in OwnerDisplayName Field");
+                                    break;
                                 case "Tags":
                                     if (!(row.attr("Tags").equalsIgnoreCase(d.get("Tags"))))
                                         System.out.println("Error in Tags Field");
                                     break;
                                 case "CreationDate":
-                                    date = getDateValue(row, "CreationDate");
-                                    if (date==null)
+                                    if (row.attr("CreationDate")=="")
                                         break;
-                                    //System.out.println("XML: " + date.toString());
-                                    date1= formatter.parse(d.get("CreationDate"));
-                                    //System.out.println("Doc: " + date1.toString());
-                                    /*if(date.equals(date1)){
-                                        System.out.println("XML Date is equal Doc Date in CreationDate Field");
-                                    }else if(date.compareTo(date1)>0){
-                                        System.out.println("XML Date is after Doc Date in CreationDate Field");
-                                    }else if(date.compareTo(date1)<0){
-                                        System.out.println("XML Date is before Doc Date in CreationDate Field");
-                                    }*/
-                                    if(!(date.toString().equalsIgnoreCase(d.get("CreationDate"))))
+                                    if(!(row.attr("CreationDate").equalsIgnoreCase(d.get("CreationDate"))))
                                         System.out.println("Error in CreationDate Field");
                                     break;
                                 case "LastEditDate":
-                                    date = getDateValue(row, "LastEditDate");
-                                    if (date==null)
+                                    if (row.attr("LastEditDate")=="")
                                         break;
-                                    //System.out.println("XML: " + date.toString());
-                                    date1= formatter.parse(d.get("LastEditDate"));
-                                    //System.out.println("Doc: " + date1.toString());
-                                    if(!(date.toString().equalsIgnoreCase(d.get("LastEditDate"))))
+                                    if(!(row.attr("LastEditDate").equalsIgnoreCase(d.get("LastEditDate"))))
                                         System.out.println("Error in LastEditDate Field");
                                     break;
                                 case "LastActivityDate":
-                                    date = getDateValue(row, "LastActivityDate");
-                                    if (date==null)
+                                    if (row.attr("LastActivityDate")=="")
                                         break;
-                                    //System.out.println("XML: " + date.toString());
-                                    date1= formatter.parse(d.get("LastActivityDate"));
-                                    //System.out.println("Doc: " + date1.toString());
-                                    if(!(date.toString().equalsIgnoreCase(d.get("LastActivityDate"))))
+                                    if(!(row.attr("LastActivityDate").equalsIgnoreCase(d.get("LastActivityDate"))))
                                         System.out.println("Error in LastActivityDate Field");
                                     break;
                                 case "CommunityOwnedDate":
-                                    date = getDateValue(row, "CommunityOwnedDate");
-                                    if (date==null)
+                                    if (row.attr("CommunityOwnedDate")=="")
                                         break;
-                                    //System.out.println("XML: " + date.toString());
-                                    date1= formatter.parse(d.get("CommunityOwnedDate"));
-                                    //System.out.println("Doc: " + date1.toString());
-                                    if(!(date.toString().equalsIgnoreCase(d.get("CommunityOwnedDate"))))
+                                    if(!(row.attr("CommunityOwnedDate").equalsIgnoreCase(d.get("CommunityOwnedDate"))))
                                         System.out.println("Error in CommunityOwnedDate Field");
+                                    break;
+                                case "ClosedDate":
+                                    if (row.attr("ClosedDate")=="")
+                                        break;
+                                    if(!(row.attr("ClosedDate").equalsIgnoreCase(d.get("ClosedDate"))))
+                                        System.out.println("Error in ClosedDate Field");
                                     break;
                                 case "Body":
                                     break;
@@ -188,8 +176,6 @@ public class SearchIndex {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (java.text.ParseException e) {
             e.printStackTrace();
         }
     }
@@ -219,7 +205,6 @@ public class SearchIndex {
     private Date getDateValue(Elements row, String tag) {
         Date date;
         try {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
             date = formatter.parse(row.attr(tag));
 
 
