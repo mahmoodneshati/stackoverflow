@@ -325,4 +325,13 @@ public class Utility {
         return null;
     }
 
+    public int getIntersection(ArrayList<String> list1, ArrayList<String> l2){
+        list1.retainAll(l2);
+        return list1.size();
+    }
+
+    public Integer getAuthorsCountByQuery(BooleanQuery query) {
+        //TODO implement this function
+        return null;
+    }
 }
