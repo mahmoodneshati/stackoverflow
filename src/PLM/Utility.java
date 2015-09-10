@@ -40,7 +40,7 @@ public class Utility {
         Utility u = new Utility();
 
         ArrayList<Integer> PIds = new ArrayList<Integer>();
-        PIds = u.getPostIDs(u.SearchTag("<c#>"));
+        /*PIds = u.getPostIDs(u.SearchTag("<c#>"));
         PIds = u.getPostIDs(u.SearchBody("standard"));
         PIds = u.getPostIDs(u.BooleanQueryOr(u.SearchTag("<c#>"), u.SearchBody("standard")));
 
@@ -68,12 +68,13 @@ public class Utility {
 
         //???
         u.getDocCountByWordInTitle("Binary");
-        u.getDocCountByWordInTitle("MySQL");
+        u.getDocCountByWordInTitle("MySQL");*/
+        u.getLastYearOfAuthor(1);
     }
 
     public Utility() {
         try {
-            IndexDir = "index2";
+            IndexDir = "index";
             reader = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
             searcher = new IndexSearcher(reader);
         } catch (IOException e) {
@@ -333,5 +334,80 @@ public class Utility {
     public Integer getAuthorsCountByQuery(BooleanQuery query) {
         //TODO implement this function
         return null;
+    }
+
+    public int getLastYearOfAuthor(Integer eid) {
+        Query Q_expertId = SearchOwnerUserId(eid);
+        int max = 0;
+        try {
+            TopDocs hits = searcher.search(Q_expertId, Integer.MAX_VALUE);
+            //System.out.println(hits.totalHits+" total matching documents");
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                if (d.get("CreationDate") != "")
+                    max = Math.max(max,Integer.parseInt(d.get("CreationDate").substring(0,4)));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //System.out.println(max);
+        return max;
+    }
+
+    public int getFirstYearOfAuthor(Integer eid) {
+        Query Q_expertId = SearchOwnerUserId(eid);
+        int min = 9999;
+        try {
+            TopDocs hits = searcher.search(Q_expertId, Integer.MAX_VALUE);
+            //System.out.println(hits.totalHits+" total matching documents");
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                if (d.get("CreationDate") != "")
+                    min = Math.max(min,Integer.parseInt(d.get("CreationDate").substring(0,4)));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //System.out.println(min);
+        return min;
+    }
+
+    public ArrayList<Integer> getActivityYearsByExpertID(Integer eid) {
+        ArrayList<Integer> activityYears = new ArrayList<Integer>();
+        try {
+            for (int year = 2008; year < 2016; year++){
+                Query q = BooleanQueryAnd(SearchOwnerUserId(eid), SearchCreationDate(year));
+                TopDocs hits = searcher.search(q, 1);
+                if (hits.totalHits ==1)
+                    activityYears.add(year);
+            }
+            return activityYears;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return activityYears;
+    }
+
+    public HashSet<Integer> getExpertsBYTagandYear(String Tag,Integer year){
+        Query q = BooleanQueryAnd(SearchCreationDate(year),SearchTag(Tag));
+        HashSet<Integer> ExpertIDs= new HashSet<Integer>();
+        try {
+            TopDocs hits = searcher.search(q, Integer.MAX_VALUE);
+            //System.out.println(hits.totalHits+" total matching documents");
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                ExpertIDs.add(Integer.parseInt(d.get("OwnerUserId")));
+            }
+            return ExpertIDs;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ExpertIDs;
     }
 }

@@ -28,14 +28,18 @@ public class PLM {
     public static void main(String args[]) {
         PLM p = new PLM();
 
-        //HashSet<String> TitleTerms = p.getTags(2008);
+        /*HashSet<String> TitleTerms = p.getTags(2008);
+        for (String tag : TitleTerms) {
+            System.out.println(tag);
+        }*/
+        //p.getConservativenessProbabilityByYear(1, 2008);
         //p.getWordProbabilityByTagAndYear(2008, "c#", "datetime");
         // p.getConservativenessProbability();
     }
 
     public PLM() {
         try {
-            IndexDir = "index2";
+            IndexDir = "index4";
             reader = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
             searcher = new IndexSearcher(reader);
             u = new Utility();
@@ -48,10 +52,10 @@ public class PLM {
     //Start from here
     public double getWordProbabilityByExpertAndYear(String word, Integer eid, int futureYear) {
 
-        HashSet<String> tags = getAllTagsByYear(futureYear);
+        HashSet<String> tags = getTagsByAuthorAndYear(futureYear, eid);
         if (tags == null) {
             System.err.println("No tags found for year = " + futureYear);
-            return -1;
+            return 0;
         }
         double output = 0;
         for (String tag : tags) {
@@ -76,7 +80,7 @@ public class PLM {
     }
 
     private double getFutureTagProbabilityByExpertAndYear(String futureTag, Integer eid, int futureYear) {
-        HashSet<String> currentYearTags = getAllTagsByYear(futureYear - 1);
+        HashSet<String> currentYearTags = getTags(futureYear - 1);
         double output = 0;
         for (String currentTag : currentYearTags) {
             output += getFutureTagProbabilityByExpertAndCurrentTag(futureTag, currentTag, eid, futureYear - 1)
@@ -87,14 +91,12 @@ public class PLM {
     }
 
     private double getCurrentYearTagProbabilityByExpertMLE(String currentTag, Integer eid, int currentYear) {
-        // TODO smooth to handle zero probability
-
         Integer N_e_t = u.getDocCount(u.BooleanQueryAnd(u.SearchOwnerUserId(eid), u.SearchCreationDate(currentYear)));
         Integer N_at_e = u.getDocCount(
                 u.BooleanQueryAnd(
                         u.BooleanQueryAnd(
                                 u.SearchOwnerUserId(eid), u.SearchCreationDate(currentYear)), u.SearchTag(currentTag)));
-        return N_at_e * 1.0 / N_e_t;
+        return N_e_t == 0?0:N_at_e * 1.0 / N_e_t;
     }
 
     private double getFutureTagProbabilityByExpertAndCurrentTag
@@ -110,10 +112,6 @@ public class PLM {
     }
 
     private double getProbabilityChoosingTagFromCurrentYearTags(String futureTag, String currentTag, int eid, int CurrentYear) {
-        if (!futureTag.equalsIgnoreCase(currentTag)) {
-            System.err.println("Error current tag should be equal to the future tag");
-            return -1;
-        }
 
         Integer N_e_t = u.getDocCount(
                 u.BooleanQueryAnd(
@@ -123,7 +121,6 @@ public class PLM {
                         u.BooleanQueryAnd(
                                 u.SearchOwnerUserId(eid), u.SearchCreationDate(CurrentYear)),
                         u.SearchTag(currentTag)));
-        //TODO handel the zero cases
         return (1.0 * N_at1_e_t) / N_e_t;
     }
 
@@ -134,41 +131,29 @@ public class PLM {
                 + ((1 - beta) * tagPopularity(futureTag, CurrentYear)));
     }
 
-    private double tagSimilarity(String futureTag, String currentYear, int CurrentYear) {
-
-        // current tag should not be equal to the pastYear tag
-        // for the given past tag, we should have a distribution over all topics
+    private double tagSimilarity(String futureTag, String currentTag, int CurrentYear) {
         //TODO this function should prepare the results before the query runTime
-        // We can compute the similarity of two tags by number of intersection of people following these two tags
 
-//        Integer a_t_Authors =
-//                u.getAuthorsCountByQuery(
-//                        u.BooleanQueryAnd(
-//                                u.SearchTag(PastYearTag), u.BooleanQueryAnd(
-//                                        u.SearchCreationDate(CurrentYear), u.SearchTag(CurrentTag))));
-//
-//        ArrayList<String> allTags = getAllTagsByYear(CurrentYear);
-//
-//        double makhraj = 0;
-//        for (String tag : allTags) {
-//            makhraj += u.getAuthorsCountByQuery(
-//                    u.BooleanQueryAnd(
-//                            u.SearchTag(PastYearTag), u.BooleanQueryAnd(
-//                                    u.SearchCreationDate(CurrentYear), u.SearchTag(tag))));
-//        }
-//
-//
-//        return a_t_Authors / makhraj;
-        return -1;
+        int sorat = tagSimilarityByAuthors(futureTag, currentTag, CurrentYear);
+
+        HashSet<String> allTags = getTags(CurrentYear);
+        double makhraj = 0;
+        for (String tag : allTags) {
+            makhraj += tagSimilarityByAuthors(futureTag, tag, CurrentYear);
+        }
+        return sorat / makhraj;
     }
 
-    private HashSet<String> getAllTagsByYear(int currentYear) {
-        // TODO Implement this function
-        return null;
+    private int tagSimilarityByAuthors(String futureTag, String currentTag, int CurrentYear) {
+        HashSet<Integer> currentExpertIDs = u.getExpertsBYTagandYear(currentTag,CurrentYear);
+        HashSet<Integer> futureExpertIDs = u.getExpertsBYTagandYear(futureTag,CurrentYear+1);
+        HashSet<Integer> IntersectionSet = new HashSet<Integer>();
+        IntersectionSet.addAll(currentExpertIDs);
+        IntersectionSet.retainAll(futureExpertIDs);
+        return IntersectionSet.size();
     }
 
     private double tagPopularity(String futureTag, int currentYear) {
-        //TOdO handel zero case
         Integer N_t = u.getDocCount(u.SearchCreationDate(currentYear));
         Integer N_at1_t = u.getDocCount(
                 u.BooleanQueryAnd(
@@ -179,48 +164,56 @@ public class PLM {
     private double getConservativenessProbability(int averageLength, Integer eid, int currentYear) {
         // idea Conservativeness is independent of the tags it only depends to the author
         double output = 0;
-        int firstYear = getFirstYearOfAuthor(eid);
-        int lastYear = getLastYearOfAuthor(eid);
+        ArrayList<Integer> activityYears = u.getActivityYearsByExpertID(eid);
         int count = 0;
-        for (int y = firstYear; y < Math.max(Math.max(averageLength + firstYear, lastYear), currentYear); y++) {
-            output += getConservativenessProbabilityByYear(eid, y);
+        for (int i = 1; i < activityYears.size(); i++) {
+            output += getConservativenessProbabilityByYear(eid, activityYears.get(i),activityYears.get(i-1));
             count++;
         }
-        // TODO handle the case of (count==0)!
-        return output / count;
+        output = (count == 0 ? 0.5 : output / count);
+        return output;
     }
 
-    private int getLastYearOfAuthor(Integer eid) {
-        // TODO this function returns the maximum year value of activation of Author eid
-        return 0;
-    }
-
-    private int getFirstYearOfAuthor(Integer eid) {
-        // TODO this function returns the minimum year value of activation of Author eid
-        return 0;
-    }
-
-    private double getConservativenessProbabilityByYear(Integer eid, int year) {
+    private double getConservativenessProbabilityByYear(Integer eid, int year, int lastYear) {
         double output;
         HashSet<String> A_t = getTagsByAuthorAndYear(year, eid);
-        HashSet<String> A_t_1 = getTagsByAuthorAndYear(year + 1, eid);
+        HashSet<String> A_t_1 = getTagsByAuthorAndYear(lastYear, eid);
         HashSet<String> IntersectionSet = new HashSet<>();
         IntersectionSet.addAll(A_t);
         IntersectionSet.retainAll(A_t_1);
         A_t_1.addAll(A_t);
-        //TODO handel the zero case
         output = (A_t_1.size() == 0 ? 0 : (IntersectionSet.size() * 1.0) / A_t_1.size());
         return output;
     }
 
     HashSet<String> getTagsByAuthorAndYear(int year, Integer eid) {
-        //TODO implement this method
+        HashSet<String> Tags = new HashSet<String>();
+        String delims = "[<>]";
+        BytesRef lowerBR = new BytesRef(String.valueOf(year));
+        BytesRef upperBR = new BytesRef(String.valueOf(year + 1));
+        Query Q_Author_Year = u.BooleanQueryAnd(new TermRangeQuery("CreationDate", lowerBR, upperBR, true, true), u.SearchOwnerUserId(eid));
+        try {
+            TopDocs hits = searcher.search(Q_Author_Year, Integer.MAX_VALUE);
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                //System.out.println("Id: "+d.get("Id"));
+                for (String tag : d.get("Tags").split(delims)) {
+                    if(tag.length() != 0 )
+                        Tags.add(tag);
+                }
+            }
+            return Tags;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
 
     private HashSet<String> getTags(int year) {
-        // TODO check the validity of this function
+        //The validity of this function had been checked.
         HashSet<String> Tags = new HashSet<String>();
         String delims = "[<>]";
         BytesRef lowerBR = new BytesRef(String.valueOf(year));
@@ -232,8 +225,10 @@ public class PLM {
             for (int i = 0; i < ScDocs.length; ++i) {
                 int docId = ScDocs[i].doc;
                 Document d = searcher.doc(docId);
+                //System.out.println("Id: "+d.get("Id"));
                 for (String tag : d.get("Tags").split(delims)) {
-                    Tags.add(tag);
+                    if(tag.length() != 0 )
+                        Tags.add(tag);
                 }
             }
             return Tags;
