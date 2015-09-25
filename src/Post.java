@@ -6,6 +6,7 @@ import org.jsoup.select.Elements;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 
 /**
  * Created by Mahmood on 8/18/2015.
@@ -36,7 +37,7 @@ public class Post {
     public Date CommunityOwnedDate;
 
 
-    public Post(String xmlLine) {
+    public Post(String xmlLine/*, HashSet<String> tagset*/) {
         formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
         Elements row = Jsoup.parse(xmlLine).getElementsByTag("row");
@@ -58,6 +59,7 @@ public class Post {
         ClosedDate = getDateValue(row, "LastActivityDate");
         Title = getStringValue(row, "Title");
         Tags = getStringList(row, "Tags");
+        //Tags = (tagset == null) ? getStringList(row, "Tags") : getTagSet(tagset);
         AnswerCount = getIntegerValue(row, "AnswerCount");
         CommentCount = getIntegerValue(row, "CommentCount");
         FavoriteCount = getIntegerValue(row, "FavoriteCount");
@@ -65,12 +67,19 @@ public class Post {
 
     }
 
+    private ArrayList<String> getTagSet(HashSet<String> tagset) {
+        ArrayList<String> out = new ArrayList<>();
+       out.addAll(tagset);
+        return out;
+    }
+
     private ArrayList<String> getStringList(Elements row, String tag) {
         ArrayList<String> out = new ArrayList<>();
-        String[] ss = row.attr(tag).split("&lt;|&gt;");
+        String[] ss = row.attr(tag).split("<|>");
         for (String s : ss) {
             if (s != null && s.trim().length() > 0)
                 out.add(s.trim());
+
         }
         return out;
 
@@ -86,14 +95,13 @@ public class Post {
         }
     }
 
-    public Post() {
-
-    }
 
     private Date getDateValue(Elements row, String tag) {
         Date date;
         try {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
             date = formatter.parse(row.attr(tag));
+
 
         } catch (Exception e) {
             date = null;
@@ -113,46 +121,49 @@ public class Post {
 
     }
 
-    public static void main(String args[]) {
-        Post p = new Post();
-        System.out.println(p.getStringValue(null, null));
-
-
-    }
-
     public Document getLuceneDocument() {
         Document doc = new Document();
         FieldType type = new FieldType();
-        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
         type.setTokenized(true);
         type.setStored(false);
         type.setStoreTermVectors(true);
         type.setStoreTermVectorPositions(true);
         type.freeze();
+
         doc.add(new IntField("Id", Id != null ? Id : -1, Field.Store.YES));
         doc.add(new IntField("PostTypeId", PostTypeId != null ? PostTypeId : -1, Field.Store.YES));
         doc.add(new IntField("ParentId", ParentId != null ? ParentId : -1, Field.Store.YES));
         doc.add(new IntField("AcceptedAnswerId", AcceptedAnswerId != null ? AcceptedAnswerId : -1, Field.Store.YES));
-        doc.add(new StringField("CreationDate",CreationDate!=null?formatter.format(CreationDate):"", Field.Store.YES));
+        doc.add(new StringField("CreationDate",
+                CreationDate!=null?DateTools.dateToString(CreationDate, DateTools.Resolution.MINUTE):"",
+                Field.Store.YES));
         doc.add(new IntField("Score", Score != null ? Score : -1, Field.Store.YES));
         doc.add(new IntField("ViewCount", ViewCount != null ? ViewCount : -1, Field.Store.YES));
+        //doc.add(new TextField("Body", Body, Field.Store.NO));
         Field field = new Field("Body", Body, type);
         doc.add(field);
+
         doc.add(new IntField("OwnerUserId", OwnerUserId != null ? OwnerUserId : -1, Field.Store.YES));
         doc.add(new StringField("OwnerDisplayName", OwnerDisplayName != null ? OwnerDisplayName : "",
                 Field.Store.YES));
         doc.add(new IntField("LastEditorUserId", LastEditorUserId != null ? LastEditorUserId : -1, Field.Store.YES));
         doc.add(new StringField("LastEditorDisplayName", LastEditorDisplayName != null ? LastEditorDisplayName : "",
                 Field.Store.YES));
-        doc.add(new StringField("LastEditDate",LastEditDate!=null?formatter.format(LastEditDate):"",Field.Store.YES));
-        doc.add(new StringField("LastActivityDate",LastActivityDate!=null?formatter.format(LastActivityDate):"",Field.Store.YES));
-        doc.add(new StringField("ClosedDate",ClosedDate!=null?formatter.format(ClosedDate):"",Field.Store.YES));
+
+        doc.add(new StringField("LastEditDate",
+                LastEditDate!=null?DateTools.dateToString(LastEditDate, DateTools.Resolution.MINUTE):"",
+                Field.Store.YES));
+        doc.add(new StringField("LastActivityDate",
+                LastActivityDate!=null?DateTools.dateToString(LastActivityDate, DateTools.Resolution.MINUTE):"",
+                Field.Store.YES));
+        doc.add(new StringField("ClosedDate", ClosedDate != null ? formatter.format(ClosedDate) : "", Field.Store.YES));
         Field field2 = new Field("Title", Title, type);
         doc.add(field2);
 
-        if(Tags.size()==0)
+        if (Tags.size() == 0)
             doc.add(new StringField("Tags", "", Field.Store.YES));
-        else{
+        else {
             for (String tag : Tags)
                 doc.add(new StringField("Tags", tag, Field.Store.YES));
         }
@@ -160,7 +171,9 @@ public class Post {
         doc.add(new IntField("AnswerCount", AnswerCount != null ? AnswerCount : -1, Field.Store.YES));
         doc.add(new IntField("CommentCount", CommentCount != null ? CommentCount : -1, Field.Store.YES));
         doc.add(new IntField("FavoriteCount", FavoriteCount != null ? FavoriteCount : -1, Field.Store.YES));
-        doc.add(new StringField("CommunityOwnedDate",CommunityOwnedDate!=null?formatter.format(CommunityOwnedDate):"",Field.Store.YES));
+        doc.add(new StringField("CommunityOwnedDate",
+                CommunityOwnedDate!=null?DateTools.dateToString(CommunityOwnedDate, DateTools.Resolution.MINUTE):"",
+                Field.Store.YES));
 
         return doc;
     }

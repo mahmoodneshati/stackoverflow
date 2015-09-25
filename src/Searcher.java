@@ -21,7 +21,7 @@ public class Searcher {
     public static void main(String[] args) throws IOException, ParseException {
         long start = new Date().getTime();
 
-        String indexDir = "index2";
+        String indexDir = "testindex";
         String q = "*:*";
         Searcher s = new Searcher(indexDir, q);
 
@@ -62,11 +62,11 @@ public class Searcher {
 
                 Terms terms2 = reader.getTermVector(i, "Title"); //get terms vectors for one document and one field
                 System.out.println("Title Terms:");
-                if (terms != null && terms.size() > 0) {
-                    TermsEnum termsEnum = terms.iterator(); // access the terms for this field
-                    BytesRef term = null;
-                    while ((term = termsEnum.next()) != null) {
-                        final String keyword = term.utf8ToString();
+                if (terms2 != null && terms2.size() > 0) {
+                    TermsEnum termsEnum = terms2.iterator(); // access the terms for this field
+                    BytesRef t = null;
+                    while ((t = termsEnum.next()) != null) {
+                        final String keyword = t.utf8ToString();
                         long termFreq = termsEnum.totalTermFreq();
                         System.out.println("term: " + keyword + ", termFreq = " + termFreq);
 

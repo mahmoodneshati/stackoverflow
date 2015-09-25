@@ -35,11 +35,16 @@ public class PLM {
         //p.getConservativenessProbabilityByYear(1, 2008);
         //p.getWordProbabilityByTagAndYear(2008, "c#", "datetime");
         // p.getConservativenessProbability();
+       // System.out.println(p.tagSimilarity("java-home","android",2013));
+        HashSet<Integer> currentExpertIDs = p.u.getExpertsBYTagandYear("java-home",2008);
+        for(Integer s:currentExpertIDs)
+            System.out.println(s);
+
     }
 
     public PLM() {
         try {
-            IndexDir = "index4";
+            IndexDir = "index2";
             reader = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
             searcher = new IndexSearcher(reader);
             u = new Utility();
@@ -52,7 +57,7 @@ public class PLM {
     //Start from here
     public double getWordProbabilityByExpertAndYear(String word, Integer eid, int futureYear) {
 
-        HashSet<String> tags = getTagsByAuthorAndYear(futureYear, eid);
+        HashSet<String> tags = getTags(futureYear);
         if (tags == null) {
             System.err.println("No tags found for year = " + futureYear);
             return 0;
@@ -92,6 +97,7 @@ public class PLM {
 
     private double getCurrentYearTagProbabilityByExpertMLE(String currentTag, Integer eid, int currentYear) {
         Integer N_e_t = u.getDocCount(u.BooleanQueryAnd(u.SearchOwnerUserId(eid), u.SearchCreationDate(currentYear)));
+        //N_e_t = count Question and answers by e in year t
         Integer N_at_e = u.getDocCount(
                 u.BooleanQueryAnd(
                         u.BooleanQueryAnd(
@@ -134,24 +140,36 @@ public class PLM {
     private double tagSimilarity(String futureTag, String currentTag, int CurrentYear) {
         //TODO this function should prepare the results before the query runTime
 
-        int sorat = tagSimilarityByAuthors(futureTag, currentTag, CurrentYear);
+        int sorat = tagOverlapByAuthors(futureTag, currentTag, CurrentYear);
 
-        HashSet<String> allTags = getTags(CurrentYear);
+        /*HashSet<String> allTags = getTags(CurrentYear);
         double makhraj = 0;
         for (String tag : allTags) {
             makhraj += tagSimilarityByAuthors(futureTag, tag, CurrentYear);
-        }
-        return sorat / makhraj;
+        }*/
+        int makhraj=tagUnionByAuthors(futureTag, currentTag, CurrentYear);
+
+
+        return 1.0*sorat / makhraj;
     }
 
-    private int tagSimilarityByAuthors(String futureTag, String currentTag, int CurrentYear) {
+    private int tagUnionByAuthors(String futureTag, String currentTag, int CurrentYear) {
         HashSet<Integer> currentExpertIDs = u.getExpertsBYTagandYear(currentTag,CurrentYear);
-        HashSet<Integer> futureExpertIDs = u.getExpertsBYTagandYear(futureTag,CurrentYear+1);
+        HashSet<Integer> futureExpertIDs = u.getExpertsBYTagandYear(futureTag,CurrentYear);
+        currentExpertIDs.addAll(futureExpertIDs);
+        return currentExpertIDs.size();
+    }
+
+    private int tagOverlapByAuthors(String futureTag, String currentTag, int CurrentYear) {
+        HashSet<Integer> currentExpertIDs = u.getExpertsBYTagandYear(currentTag,CurrentYear);
+        HashSet<Integer> futureExpertIDs = u.getExpertsBYTagandYear(futureTag,CurrentYear);
         HashSet<Integer> IntersectionSet = new HashSet<Integer>();
         IntersectionSet.addAll(currentExpertIDs);
         IntersectionSet.retainAll(futureExpertIDs);
         return IntersectionSet.size();
     }
+
+
 
     private double tagPopularity(String futureTag, int currentYear) {
         Integer N_t = u.getDocCount(u.SearchCreationDate(currentYear));
