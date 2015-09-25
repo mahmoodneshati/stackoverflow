@@ -40,66 +40,113 @@ public class Utility {
         Utility u = new Utility();
 
         ArrayList<Integer> PIds = new ArrayList<Integer>();
+        System.out.println("\ntest:\n");
         PIds = u.getPostIDs(u.SearchTag("html"));//correct
         PIds = u.getPostIDs(u.SearchTag("css3"));//correct
+
+        System.out.println("\ntest:\n");
         PIds = u.getPostIDs(u.SearchBody("standard"));//correct
         PIds = u.getPostIDs(u.SearchBody2("standard"));//correct
         PIds = u.getPostIDs(u.SearchBody("time"));//correct
         PIds = u.getPostIDs(u.SearchBody2("time"));//correct
 
         //????? wrong
+        System.out.println("\ntest:\n");
         PIds = u.getPostIDs(u.SearchTitle("MySQL"));
         PIds = u.getPostIDs(u.SearchTitle2("MySQL"));
         PIds = u.getPostIDs(u.SearchTitle("Binary"));
         PIds = u.getPostIDs(u.SearchTitle2("Binary"));
 
+        System.out.println("\ntest:\n");
         PIds = u.getPostIDs(u.SearchOwnerUserId(2));//correct
         PIds = u.getPostIDs(u.SearchPostId(6));//correct
 
+        System.out.println("\ntest:\n");
         PIds = u.getPostIDs(u.SearchCreationDate(2008));//correct
         PIds = u.getPostIDs(u.SearchCreationDate(2009));//correct
         PIds = u.getPostIDs(u.SearchCreationDate(2010));//correct
         PIds = u.getPostIDs(u.SearchCreationDate(2012));//correct
 
+        System.out.println("\ntest:\n");
         PIds = u.getPostIDs(u.SearchCreationDateRange("20080725", "200807301712"));//correct
         PIds = u.getPostIDs(u.SearchCreationDateRange("20090101", "20091231"));//correct
 
+        System.out.println("\ntest:\n");
         PIds = u.getPostIDs(u.SearchCreationDateRange2("20080725", "200807301712"));//correct
         PIds = u.getPostIDs(u.SearchCreationDateRange2("20090101", "20091231"));//correct
 
+        System.out.println("\ntest:\n");
         System.out.println("OR:");
         PIds = u.getPostIDs(u.SearchTag("c#"));//correct
         PIds = u.getPostIDs(u.SearchBody("standard"));//correct
         PIds = u.getPostIDs(u.BooleanQueryOr(u.SearchTag("c#"), u.SearchBody("standard")));//correct
 
+        System.out.println("\ntest:\n");
         System.out.println("AND:");
         PIds = u.getPostIDs(u.SearchTag("html"));//correct
         PIds = u.getPostIDs(u.SearchBody("standard"));//correct
         PIds = u.getPostIDs(u.BooleanQueryAnd(u.SearchTag("html"), u.SearchBody("standard")));//correct
 
 
+        System.out.println("\ntest:\n");
         ArrayList<String> BodyTerms = u.getTerms(u.SearchPostId(4), "Body");//correct
+
+        System.out.println("\ntest:\n");
         ArrayList<String> TitleTerms = u.getTerms(u.SearchPostId(4), "Title");//correct
 
+        System.out.println("\ntest:\n");
         u.getFreqOfWordInBody("return");//correct
         u.getFreqOfWordInBody2("return");//correct
 
+        System.out.println("\ntest:\n");
         u.getFreqOfWordInBody("i");//correct
         u.getFreqOfWordInBody2("i");//correct
 
 
-        u.getFreqOfWordInBody(4,"i");//wrong
+        System.out.println("\ntest:\n");
+        PIds = u.getPostIDs(u.SearchBody("time"));//correct
+        u.getDocCountByWordInBody("time");//correct
+        u.getDocCount(u.SearchBody("time"));//correct
 
-        /*u.getDocCount(u.SearchTag("<c#>"));
-        u.getDocCountByWordInBody("standard");
-        u.getDocCount(u.SearchBody("standard"));
+        System.out.println("\ntest:\n");
+        PIds = u.getPostIDs(u.SearchBody("i"));//correct
+        u.getDocCountByWordInBody("i");//correct
+        u.getDocCount(u.SearchBody("i"));//correct
 
-        //???
-        u.getDocCountByWordInTitle("Binary");
-        u.getDocCountByWordInTitle("MySQL");*/
-        //u.getLastYearOfAuthor(1);
-        //u.SearchCreationDate(2008);
-        //PIds = u.getPostIDs(u.SearchCreationDateRange("200807300000", "200807319999"));
+        System.out.println("\ntest:\n");
+        PIds = u.getPostIDs(u.SearchTitle("i"));//correct
+        u.getDocCountByWordInTitle("i");//correct
+        u.getDocCount(u.SearchTitle("i"));//correct
+
+        //????? wrong
+        System.out.println("\ntest:\n");
+        PIds = u.getPostIDs(u.SearchTitle("MySQL"));//wrong
+        PIds = u.getPostIDs(u.SearchTitle2("MySQL"));//correct
+        u.getDocCountByWordInTitle("MySQL");//wrong
+        u.getDocCountByWordInTitle2("MySQL");//correct
+        u.getDocCount(u.SearchTitle("MySQL"));//wrong
+        u.getDocCount(u.SearchTitle2("MySQL"));//correct
+
+        System.out.println("\ntest:\n");
+        PIds = u.getPostIDs(u.SearchCreationDate(2009));//correct
+        PIds = u.getPostIDs(u.SearchOwnerUserId(9));//correct
+        PIds = u.getPostIDs(u.BooleanQueryAnd(u.SearchOwnerUserId(9), u.SearchCreationDate(2009)));//correct
+
+        System.out.println("\ntest:\n");
+        ArrayList<Integer> ActivityYears = u.getActivityYearsByExpertID(9);//wrong in search function
+        for(Integer year:ActivityYears)
+            System.out.println(year);
+
+        System.out.println("\ntest:\n");
+        for(Integer year:u.getExpertsBYTagandYear("html",2009))
+            System.out.println("ExpertID: "+year);
+
+        System.out.println("\ntest:\n");
+        for(Integer year:u.getExpertsBYTagandYear("c#",2010))
+            System.out.println("ExpertID: "+year);
+
+
+        //u.getFreqOfWordInBody(17,"i");//wrong- with error
     }
 
     public Utility() {
@@ -199,6 +246,7 @@ public class Utility {
 
     //correct
     public Query SearchCreationDate(int year) {
+        System.out.println("Searching for Creation year: "+year);
         BytesRef lowerBR = new BytesRef(String.valueOf(year));
         BytesRef upperBR = new BytesRef(String.valueOf(year+1));
         Query query = new TermRangeQuery("CreationDate", lowerBR, upperBR, true, true);
@@ -283,31 +331,8 @@ public class Utility {
             e.printStackTrace();
         }
     }
-//***********
-    //7
-    public long getFreqOfWordInBody(Integer DocID, String word){
-        try {
-            Terms terms = reader.getTermVector(DocID, "Body"); //get terms vectors for one document and one field
-            if (terms != null && terms.size() > 0) {
-                TermsEnum termsEnum = terms.iterator(); // access the terms for this field
-                BytesRef term = null;
-                while((term = termsEnum.next()) != null) {
-                    final String keyword = term.utf8ToString();
-                    long termFreq = termsEnum.totalTermFreq();
-                    if(keyword.equalsIgnoreCase(word)){
-                        System.out.println("term: "+keyword+", termFreq = "+termFreq);
-                        return termFreq;
-                    }
 
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return -1;
-    }
-
-    //8
+    //8 correct
     public Integer getDocCountByWordInBody(String word){
         try{
             System.out.println(word+" occurs in Body of "+reader.docFreq(new Term("Body", word))+" document");
@@ -318,17 +343,27 @@ public class Utility {
         return -1;
     }
 
-    //8
+    //8 wrong
     public Integer getDocCountByWordInTitle(String word) {
+        try{
+            Integer output = reader.docFreq(new Term("Title", word));
+            System.out.println(word+" occur in Title of "+output+" document");
+            return output;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    //correct
+    public Integer getDocCountByWordInTitle2(String word) {
         try{
             Analyzer analyzer = new StandardAnalyzer();
             QueryParser parser = new QueryParser("Title", analyzer);
             Query query = parser.parse("Title:" + word);
             TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
-            //!!!!!!!!!!!!!!!!!!!!
             System.out.println(word+" occur in Title of "+hits.totalHits+" document");
-            System.out.println(word+" occur in Title of "+reader.docFreq(new Term("Title", word))+" document");
-            return reader.docFreq(new Term("Title",word));
+            return hits.totalHits;
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
@@ -337,6 +372,7 @@ public class Utility {
         return -1;
     }
 
+    //correct
     public Integer getDocCount(Query q){
         try {
             TopDocs hits = searcher.search(q, Integer.MAX_VALUE);
@@ -348,6 +384,11 @@ public class Utility {
         return -1;
     }
 
+    /**
+     * Get PostID of query result
+     * @param q input query
+     * @return list of PostIDs
+     */
     public ArrayList<Integer> getPostIDs(Query q){
         try {
             ArrayList<Integer> PIDs= new ArrayList<Integer>();
@@ -367,6 +408,24 @@ public class Utility {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public ArrayList<Integer> getActivityYearsByExpertID(Integer eid) {
+        ArrayList<Integer> activityYears = new ArrayList<Integer>();
+        try {
+            for (int year = 2008; year < 2016; year++){
+                Query q = BooleanQueryAnd(SearchOwnerUserId(eid), SearchCreationDate(year));
+                TopDocs hits = searcher.search(q, 1);//retrieve more than one docs
+                System.out.println(hits.totalHits + " total matching documents");
+                if (hits.totalHits > 0){
+                    activityYears.add(year);
+                }
+            }
+            return activityYears;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return activityYears;
     }
 
     public ArrayList<String> getTerms(Query q,String field){
@@ -399,72 +458,6 @@ public class Utility {
         return null;
     }
 
-    public int getIntersection(ArrayList<String> list1, ArrayList<String> l2){
-        list1.retainAll(l2);
-        return list1.size();
-    }
-
-    public Integer getAuthorsCountByQuery(BooleanQuery query) {
-        //TODO implement this function
-        return null;
-    }
-
-    public int getLastYearOfAuthor(Integer eid) {
-        Query Q_expertId = SearchOwnerUserId(eid);
-        int max = 0;
-        try {
-            TopDocs hits = searcher.search(Q_expertId, Integer.MAX_VALUE);
-            //System.out.println(hits.totalHits+" total matching documents");
-            ScoreDoc[] ScDocs = hits.scoreDocs;
-            for (int i = 0; i < ScDocs.length; ++i) {
-                int docId = ScDocs[i].doc;
-                Document d = searcher.doc(docId);
-                if (d.get("CreationDate") != "")
-                    max = Math.max(max,Integer.parseInt(d.get("CreationDate").substring(0,4)));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //System.out.println(max);
-        return max;
-    }
-
-    public int getFirstYearOfAuthor(Integer eid) {
-        Query Q_expertId = SearchOwnerUserId(eid);
-        int min = 9999;
-        try {
-            TopDocs hits = searcher.search(Q_expertId, Integer.MAX_VALUE);
-            //System.out.println(hits.totalHits+" total matching documents");
-            ScoreDoc[] ScDocs = hits.scoreDocs;
-            for (int i = 0; i < ScDocs.length; ++i) {
-                int docId = ScDocs[i].doc;
-                Document d = searcher.doc(docId);
-                if (d.get("CreationDate") != "")
-                    min = Math.max(min,Integer.parseInt(d.get("CreationDate").substring(0,4)));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //System.out.println(min);
-        return min;
-    }
-
-    public ArrayList<Integer> getActivityYearsByExpertID(Integer eid) {
-        ArrayList<Integer> activityYears = new ArrayList<Integer>();
-        try {
-            for (int year = 2008; year < 2016; year++){
-                Query q = BooleanQueryAnd(SearchOwnerUserId(eid), SearchCreationDate(year));
-                TopDocs hits = searcher.search(q, 1);
-                if (hits.totalHits ==1)
-                    activityYears.add(year);
-            }
-            return activityYears;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return activityYears;
-    }
-
     public HashSet<Integer> getExpertsBYTagandYear(String Tag,Integer year){
         Query q = BooleanQueryAnd(SearchCreationDate(year),SearchTag(Tag));
         HashSet<Integer> ExpertIDs= new HashSet<Integer>();
@@ -482,5 +475,41 @@ public class Utility {
             e.printStackTrace();
         }
         return ExpertIDs;
+    }
+
+    //***********
+    //7 with error
+    public long getFreqOfWordInBody(Integer DocID, String word){
+        try {
+            IndexReader reader2 = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
+            Terms terms = reader2.getTermVector(DocID, "Body"); //get terms vectors for one document and one field
+            System.out.println(terms.size());
+            if (terms != null && terms.size() > 0) {
+                TermsEnum termsEnum = terms.iterator(); // access the terms for this field
+                BytesRef term = null;
+                while ((term = termsEnum.next()) != null) {
+                    final String keyword = term.utf8ToString();
+                    long termFreq = termsEnum.totalTermFreq();
+                    if (keyword.equalsIgnoreCase(word)) {
+                        System.out.println("term: " + keyword + ", termFreq = " + termFreq);
+                        return termFreq;
+                    }
+
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public int getIntersection(ArrayList<String> list1, ArrayList<String> l2){
+        list1.retainAll(l2);
+        return list1.size();
+    }
+
+    public Integer getAuthorsCountByQuery(BooleanQuery query) {
+        //TODO implement this function
+        return null;
     }
 }
