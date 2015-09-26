@@ -129,6 +129,7 @@ public class Main {
     protected void setUp() throws IOException, ParseException {
         analyzer = new StandardAnalyzer();
 
+
         ramDir = new RAMDirectory();
 
         ramWriter = new IndexWriter(ramDir, new IndexWriterConfig(analyzer));

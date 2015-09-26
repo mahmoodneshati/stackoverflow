@@ -40,7 +40,7 @@ public class SearchIndex {
 
     public SearchIndex() {
         try {
-            String indexDir = "index2";
+            String indexDir = "testindex";
             String q = "";
 
             IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDir)));

@@ -135,8 +135,8 @@ public class Post {
         doc.add(new IntField("PostTypeId", PostTypeId != null ? PostTypeId : -1, Field.Store.YES));
         doc.add(new IntField("ParentId", ParentId != null ? ParentId : -1, Field.Store.YES));
         doc.add(new IntField("AcceptedAnswerId", AcceptedAnswerId != null ? AcceptedAnswerId : -1, Field.Store.YES));
-        doc.add(new StringField("CreationDate",
-                CreationDate!=null?DateTools.dateToString(CreationDate, DateTools.Resolution.MINUTE):"",
+        doc.add(new LongField("CreationDate",
+                CreationDate!=null?CreationDate.getTime():-1,
                 Field.Store.YES));
         doc.add(new IntField("Score", Score != null ? Score : -1, Field.Store.YES));
         doc.add(new IntField("ViewCount", ViewCount != null ? ViewCount : -1, Field.Store.YES));
@@ -151,13 +151,12 @@ public class Post {
         doc.add(new StringField("LastEditorDisplayName", LastEditorDisplayName != null ? LastEditorDisplayName : "",
                 Field.Store.YES));
 
-        doc.add(new StringField("LastEditDate",
-                LastEditDate!=null?DateTools.dateToString(LastEditDate, DateTools.Resolution.MINUTE):"",
+        doc.add(new LongField("LastEditDate",
+                LastEditDate!=null?LastEditDate.getTime():-1, Field.Store.YES));
+        doc.add(new LongField("LastActivityDate",
+                LastActivityDate!=null?LastActivityDate.getTime():-1,
                 Field.Store.YES));
-        doc.add(new StringField("LastActivityDate",
-                LastActivityDate!=null?DateTools.dateToString(LastActivityDate, DateTools.Resolution.MINUTE):"",
-                Field.Store.YES));
-        doc.add(new StringField("ClosedDate", ClosedDate != null ? formatter.format(ClosedDate) : "", Field.Store.YES));
+        doc.add(new LongField("ClosedDate", ClosedDate!=null?ClosedDate.getTime(): -1, Field.Store.YES));
         Field field2 = new Field("Title", Title, type);
         doc.add(field2);
 
@@ -171,9 +170,7 @@ public class Post {
         doc.add(new IntField("AnswerCount", AnswerCount != null ? AnswerCount : -1, Field.Store.YES));
         doc.add(new IntField("CommentCount", CommentCount != null ? CommentCount : -1, Field.Store.YES));
         doc.add(new IntField("FavoriteCount", FavoriteCount != null ? FavoriteCount : -1, Field.Store.YES));
-        doc.add(new StringField("CommunityOwnedDate",
-                CommunityOwnedDate!=null?DateTools.dateToString(CommunityOwnedDate, DateTools.Resolution.MINUTE):"",
-                Field.Store.YES));
+        doc.add(new LongField("CommunityOwnedDate", CommunityOwnedDate!=null?CommunityOwnedDate.getTime():-1, Field.Store.YES));
 
         return doc;
     }
