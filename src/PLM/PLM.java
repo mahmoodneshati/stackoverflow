@@ -27,15 +27,6 @@ public class PLM {
 
     public static void main(String args[]) {
         PLM p = new PLM();
-
-        /*HashSet<String> TitleTerms = p.getTags(2008);
-        for (String tag : TitleTerms) {
-            System.out.println(tag);
-        }*/
-        //p.getConservativenessProbabilityByYear(1, 2008);
-        //p.getWordProbabilityByTagAndYear(2008, "c#", "datetime");
-        // p.getConservativenessProbability();
-       // System.out.println(p.tagSimilarity("java-home","android",2013));
         HashSet<Integer> currentExpertIDs = p.u.getExpertsBYTagandYear("java-home",2008);
         for(Integer s:currentExpertIDs)
             System.out.println(s);
@@ -47,7 +38,7 @@ public class PLM {
             IndexDir = "index2";
             reader = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
             searcher = new IndexSearcher(reader);
-            u = new Utility();
+            u = new Utility(IndexDir);
             beta = 0.5;
         } catch (IOException e) {
             e.printStackTrace();

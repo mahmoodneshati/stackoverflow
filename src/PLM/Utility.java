@@ -1,30 +1,18 @@
 package PLM;
 
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.*;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.QueryBuilder;
-import org.jsoup.Jsoup;
-import org.jsoup.select.Elements;
-import org.apache.lucene.document.*;
 
-import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import org.apache.lucene.queryparser.classic.ParseException;
-
 import java.io.IOException;
 
 import org.apache.lucene.index.DirectoryReader;
@@ -42,135 +30,11 @@ public class Utility {
 
 
     public static void main(String args[]) {
-        Utility u = new Utility();
-
-        ArrayList<Integer> PIds = new ArrayList<Integer>();
-        /*System.out.println("\ntest:\n");
-        PIds = u.getPostIDs(u.SearchTag("html"));//correct
-        PIds = u.getPostIDs(u.SearchTag("css3"));//correct
-
-        System.out.println("\ntest:\n");
-        PIds = u.getPostIDs(u.SearchBody("standard"));//correct
-        PIds = u.getPostIDs(u.SearchBody2("standard"));//correct
-        PIds = u.getPostIDs(u.SearchBody("time"));//correct
-        PIds = u.getPostIDs(u.SearchBody2("time"));//correct
-
-        //????? wrong
-        // Search terms should be in lower case because when we index it we convert them in lower case
-        // Alternatively (better approach), we can use standard analyzer which I implemented in SearchTitle function
-
-        System.out.println("\ntest:\n");
-        PIds = u.getPostIDs(u.SearchTitle("MYSQL"));
-        PIds = u.getPostIDs(u.SearchTitle2("MySQL"));
-        PIds = u.getPostIDs(u.SearchTitle("Binary"));
-        PIds = u.getPostIDs(u.SearchTitle2("Binary"));
-
-        System.out.println("\ntest:\n");
-        PIds = u.getPostIDs(u.SearchOwnerUserId(2));//correct
-        PIds = u.getPostIDs(u.SearchPostId(6));//correct
-
-        System.out.println("\ntest:\n");
-        // I changed the Indexing and searching for the date!
-        PIds = u.getPostIDs(u.SearchCreationDate(2008));//correct
-        PIds = u.getPostIDs(u.SearchCreationDate(2009));//correct
-        PIds = u.getPostIDs(u.SearchCreationDate(2010));//correct
-        PIds = u.getPostIDs(u.SearchCreationDate(2012));//correct
-
-        System.out.println("\ntest:\n");
-        Calendar c1 = Calendar.getInstance();
-        c1.set(2008,Calendar.JULY,1);
-
-        Calendar c2 = Calendar.getInstance();
-        c2.set(2008,Calendar.JULY,31);
-
-        PIds = u.getPostIDs(u.SearchCreationDateRange(c1, c2));//correct
-        //PIds = u.getPostIDs(u.SearchCreationDateRange("20090101", "20091231"));//correct
-
-        System.out.println("\ntest:\n");
-        //PIds = u.getPostIDs(u.SearchCreationDateRange2("20080725", "200807301712"));//correct
-        //PIds = u.getPostIDs(u.SearchCreationDateRange2("20090101", "20091231"));//correct
-
-        System.out.println("\ntest:\n");
-        System.out.println("OR:");
-        PIds = u.getPostIDs(u.SearchTag("c#"));//correct
-        PIds = u.getPostIDs(u.SearchBody("standard"));//correct
-        PIds = u.getPostIDs(u.BooleanQueryOr(u.SearchTag("c#"), u.SearchBody("standard")));//correct
-
-        System.out.println("\ntest:\n");
-        System.out.println("AND:");
-        PIds = u.getPostIDs(u.SearchTag("html"));//correct
-        PIds = u.getPostIDs(u.SearchBody("standard"));//correct
-        PIds = u.getPostIDs(u.BooleanQueryAnd(u.SearchTag("html"), u.SearchBody("standard")));//correct
-
-
-        System.out.println("\ntest:\n");
-        ArrayList<String> BodyTerms = u.getTerms(u.SearchPostId(4), "Body");//correct
-
-        System.out.println("\ntest:\n");
-        ArrayList<String> TitleTerms = u.getTerms(u.SearchPostId(4), "Title");//correct
-
-        System.out.println("\ntest:\n");
-        u.getFreqOfWordInBody("return");//correct
-        u.getFreqOfWordInBody2("return");//correct
-
-        System.out.println("\ntest:\n");
-        u.getFreqOfWordInBody("i");//correct
-        u.getFreqOfWordInBody2("i");//correct
-
-
-        System.out.println("\ntest:\n");
-        PIds = u.getPostIDs(u.SearchBody("time"));//correct
-        u.getDocCountByWordInBody("time");//correct
-        u.getDocCount(u.SearchBody("time"));//correct
-
-        System.out.println("\ntest:\n");
-        PIds = u.getPostIDs(u.SearchBody("i"));//correct
-        u.getDocCountByWordInBody("i");//correct
-        u.getDocCount(u.SearchBody("i"));//correct
-
-        System.out.println("\ntest:\n");
-        PIds = u.getPostIDs(u.SearchTitle("i"));//correct
-        u.getDocCountByWordInTitle("i");//correct
-        u.getDocCount(u.SearchTitle("i"));//correct
-
-        //????? wrong
-        System.out.println("\ntest:\n");
-        PIds = u.getPostIDs(u.SearchTitle("MySQL"));//wrong
-        PIds = u.getPostIDs(u.SearchTitle2("MySQL"));//correct
-        u.getDocCountByWordInTitle("MySQL");//wrong
-        u.getDocCountByWordInTitle2("MySQL");//correct
-        u.getDocCount(u.SearchTitle("MySQL"));//wrong
-        u.getDocCount(u.SearchTitle2("MySQL"));//correct
-
-        System.out.println("\ntest:\n");
-        PIds = u.getPostIDs(u.SearchCreationDate(2009));//correct
-        PIds = u.getPostIDs(u.SearchOwnerUserId(9));//correct
-        PIds = u.getPostIDs(u.BooleanQueryAnd(u.SearchOwnerUserId(9), u.SearchCreationDate(2009)));//correct
-
-        System.out.println("\ntest:\n");
-        // I chaged the date search method seems to work fine please recheck
-        ArrayList<Integer> ActivityYears = u.getActivityYearsByExpertID(9);
-
-        for(Integer year:ActivityYears)
-            System.out.println(year);
-
-        System.out.println("\ntest:\n");
-        for(Integer year:u.getExpertsBYTagandYear("html",2009))
-            System.out.println("ExpertID: "+year);
-
-        System.out.println("\ntest:\n");
-        for(Integer year:u.getExpertsBYTagandYear("c#",2010))
-            System.out.println("ExpertID: "+year);
-*/
-
-        PIds = u.getPostIDs(u.SearchPostId(17));
-        long c= u.getFreqOfWordInBody(7, "expit");//wrong- with error
-        System.out.println(c);
+        Utility u = new Utility("testindex");
     }
 
-    public Utility() {
+    public Utility(String IndexDir) {
         try {
-            IndexDir = "testindex";
             reader = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
             searcher = new IndexSearcher(reader);
             analyzer = new StandardAnalyzer();
@@ -179,131 +43,85 @@ public class Utility {
         }
     }
 
-    //1 correct
     public Query SearchTag(String tag) {
-        System.out.println("Searching for " + tag + " tag ...");
         Query query = new TermQuery(new Term("Tags", tag));
         return query;
     }
 
-    //correct
     public Query SearchBody(String word) {
         QueryBuilder builder = new QueryBuilder(analyzer);
         return builder.createBooleanQuery("Body", word);
-
     }
 
-    //correct
-    public Query SearchBody2(String word) {
-        try {
-            System.out.println("Searching for " + word + " in Body field ...");
-            Analyzer analyzer = new StandardAnalyzer();
-            QueryParser parser = new QueryParser("Body", analyzer);
-            Query query = parser.parse("Body:" + word);
-            return query;
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    //2
     public Query SearchTitle(String word) {
-        System.out.println("Searching for " + word + " in Title field ...");
         QueryBuilder builder = new QueryBuilder(analyzer);
         return builder.createBooleanQuery("Title", word);
-        /*Query query = new TermQuery(new Term("Title", word));
-
-        return query;*/
     }
 
-    public Query SearchTitle2(String word) {
-        try {
-            System.out.println("Searching for " + word + " in Title field ...");
-            Analyzer analyzer = new StandardAnalyzer();
-            QueryParser parser = new QueryParser("Title", analyzer);
-            Query query = parser.parse("Title:" + word);
-            return query;
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    //3 correct
     public Query SearchOwnerUserId(Integer UsersID) {
-        System.out.println("Searching for " + UsersID + " as OwnerUserID...");
         Query query = NumericRangeQuery.newIntRange("OwnerUserId", UsersID, UsersID, true, true);
         return query;
     }
 
-    //4 correct
     public Query SearchPostId(Integer PostID) {
-        System.out.println("Searching for " + PostID + " as Post ID...");
         Query query = NumericRangeQuery.newIntRange("Id", PostID, PostID, true, true);
         return query;
     }
 
-    //5 correct
     public Query SearchCreationDateRange(Calendar c1, Calendar c2) {
         return NumericRangeQuery.newLongRange("CreationDate", c1.getTimeInMillis(), c2.getTimeInMillis(), true, true);
     }
 
-    //5 correct
-    public Query SearchCreationDateRange2(String lower, String upper) {
-        try {
-            System.out.println("2*: Searching for Post IDs By CreationDate Range:[" + lower + " TO " + upper + "]");
-            Analyzer analyzer = new StandardAnalyzer();
-            QueryParser parser = new QueryParser("Title", analyzer);
-            Query query = parser.parse("CreationDate:[" + lower + " TO " + upper + "]");
-            return query;
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    //correct
     public Query SearchCreationDate(int year) {
-        System.out.println("Searching for Creation year: " + year);
-        Calendar c1 = Calendar.getInstance();
-        c1.set(year, Calendar.JANUARY, 1);
-        Calendar c2 = Calendar.getInstance();
-        c2.set(year + 1, Calendar.JANUARY, 1);
-
+        Calendar c1 = getFirstDay(year);
+        Calendar c2 = getLastDay(year);
         return NumericRangeQuery.newLongRange("CreationDate", c1.getTimeInMillis(), c2.getTimeInMillis(), true, true);
-
     }
 
-    //6 correct
+    private Calendar getFirstDay(int year) {
+        Calendar c1 = Calendar.getInstance();
+        c1.set(year, Calendar.JANUARY, 1, 0, 0, 0);
+        c1.clear(Calendar.MINUTE);
+        c1.clear(Calendar.HOUR);
+        c1.clear(Calendar.SECOND);
+        c1.clear(Calendar.MILLISECOND);
+        return c1;
+    }
+
+    private Calendar getLastDay(int year) {
+        Calendar c2 = Calendar.getInstance();
+        c2.set(year,  Calendar.DECEMBER, 31, 23, 59);
+        c2.clear(Calendar.MINUTE);
+        c2.clear(Calendar.HOUR);
+        c2.clear(Calendar.SECOND);
+        c2.clear(Calendar.MILLISECOND);
+        return c2;
+    }
+
     public BooleanQuery BooleanQueryOr(Query q1, Query q2) {
-        System.out.println("OR Operation:");
         BooleanQuery query = new BooleanQuery();
         query.add(q1, BooleanClause.Occur.SHOULD);
         query.add(q2, BooleanClause.Occur.SHOULD);
         return query;
     }
 
-    //6 correct
     public BooleanQuery BooleanQueryAnd(Query q1, Query q2) {
-        System.out.println("AND Operation:");
         BooleanQuery query = new BooleanQuery();
         query.add(q1, BooleanClause.Occur.MUST);
         query.add(q2, BooleanClause.Occur.MUST);
         return query;
     }
 
-    // correct
     public void getFreqOfWordInBody(String word) {
         try {
-            Query query = new TermQuery(new Term("Body", word));
+            QueryBuilder builder = new QueryBuilder(analyzer);
+            Query query = builder.createBooleanQuery("Body", word);
             TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
             System.out.println(hits.totalHits + " total matching documents");
             ScoreDoc[] ScDocs = hits.scoreDocs;
             for (int i = 0; i < ScDocs.length; ++i) {
                 int docId = ScDocs[i].doc;
                 Document d = searcher.doc(docId);
-                //System.out.println(d.toString());
                 Terms terms = reader.getTermVector(docId, "Body"); //get terms vectors for one document and one field
                 if (terms != null && terms.size() > 0) {
                     TermsEnum termsEnum = terms.iterator(); // access the terms for this field
@@ -321,84 +139,27 @@ public class Utility {
         }
     }
 
-    //7 correct
-    public void getFreqOfWordInBody2(String word) {
-        try {
-            Analyzer analyzer = new StandardAnalyzer();
-            QueryParser parser = new QueryParser("Body", analyzer);
-            Query query = parser.parse("Body:" + word);
-
-            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
-            System.out.println(hits.totalHits + " total matching documents");
-            ScoreDoc[] ScDocs = hits.scoreDocs;
-            for (int i = 0; i < ScDocs.length; ++i) {
-                int docId = ScDocs[i].doc;
-                Document d = searcher.doc(docId);
-                //System.out.println(d.toString());
-                Terms terms = reader.getTermVector(docId, "Body"); //get terms vectors for one document and one field
-                if (terms != null && terms.size() > 0) {
-                    TermsEnum termsEnum = terms.iterator(); // access the terms for this field
-                    BytesRef term = null;
-                    while ((term = termsEnum.next()) != null) {
-                        final String keyword = term.utf8ToString();
-                        long termFreq = termsEnum.totalTermFreq();
-                        if (keyword.equalsIgnoreCase(word))
-                            System.out.println("DocID: " + d.get("Id") + ", term: " + keyword + ", termFreq = " + termFreq);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-    }
-
-    //8 correct
     public Integer getDocCountByWordInBody(String word) {
         try {
-            System.out.println(word + " occurs in Body of " + reader.docFreq(new Term("Body", word)) + " document");
-            return reader.docFreq(new Term("Body", word));
+            return reader.docFreq(new Term("Body", word.toLowerCase()));
         } catch (IOException e) {
             e.printStackTrace();
         }
         return -1;
     }
 
-    //8 wrong
     public Integer getDocCountByWordInTitle(String word) {
         try {
-            Integer output = reader.docFreq(new Term("Title", word));
-            System.out.println(word + " occur in Title of " + output + " document");
-            return output;
+            return reader.docFreq(new Term("Title", word.toLowerCase()));
         } catch (IOException e) {
             e.printStackTrace();
         }
         return -1;
     }
 
-    //correct
-    public Integer getDocCountByWordInTitle2(String word) {
-        try {
-            Analyzer analyzer = new StandardAnalyzer();
-            QueryParser parser = new QueryParser("Title", analyzer);
-            Query query = parser.parse("Title:" + word);
-            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
-            System.out.println(word + " occur in Title of " + hits.totalHits + " document");
-            return hits.totalHits;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return -1;
-    }
-
-    //correct
     public Integer getDocCount(Query q) {
         try {
             TopDocs hits = searcher.search(q, Integer.MAX_VALUE);
-            System.out.println(hits.totalHits + " total matching documents");
             return hits.totalHits;
         } catch (IOException e) {
             e.printStackTrace();
@@ -416,13 +177,13 @@ public class Utility {
         try {
             ArrayList<Integer> PIDs = new ArrayList<Integer>();
             TopDocs hits = searcher.search(q, Integer.MAX_VALUE);
-            System.out.println(hits.totalHits + " total matching documents");
+            //System.out.println(hits.totalHits + " total matching documents");
 
             ScoreDoc[] ScDocs = hits.scoreDocs;
             for (int i = 0; i < ScDocs.length; ++i) {
                 int docId = ScDocs[i].doc;
                 Document d = searcher.doc(docId);
-                System.out.println(d.toString());
+                //System.out.println(d.toString());
                 System.out.println("Post Id:" + d.get("Id"));
                 PIDs.add(Integer.parseInt(d.get("Id")));
             }
@@ -438,8 +199,8 @@ public class Utility {
         try {
             for (int year = 2008; year < 2016; year++) {
                 Query q = BooleanQueryAnd(SearchOwnerUserId(eid), SearchCreationDate(year));
-                TopDocs hits = searcher.search(q, 1);//retrieve more than one docs
-                System.out.println(hits.totalHits + " total matching documents");
+                TopDocs hits = searcher.search(q, 1);
+                //System.out.println(hits.totalHits + " total matching documents");
                 if (hits.totalHits > 0) {
                     activityYears.add(year);
                 }
@@ -500,33 +261,23 @@ public class Utility {
         return ExpertIDs;
     }
 
-    //***********
-    //7 with error
     public long getFreqOfWordInBody(Integer DocID, String word) {
-        // Why you open a second pointer to the index????
         try {
-            //IndexReader reader2 = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
             PostingsEnum postingsEnum = MultiFields.getTermDocsEnum(reader,
                     MultiFields.getLiveDocs(reader), "Body", new BytesRef(word));
             int doc;
             int output;
             while ((doc = postingsEnum.nextDoc()) != PostingsEnum.NO_MORE_DOCS) {
-
                 if (Integer.parseInt(reader.document(doc).get("Id")) == DocID) {
                     break;
                 }
             }
             output =postingsEnum.freq();
-            //reader2.close();
             return output;
-
-
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return 0;
-
         }
-
     }
 
     public int getIntersection(ArrayList<String> list1, ArrayList<String> l2) {

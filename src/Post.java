@@ -3,8 +3,11 @@ import org.apache.lucene.index.IndexOptions;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 
@@ -95,13 +98,18 @@ public class Post {
         }
     }
 
-
     private Date getDateValue(Elements row, String tag) {
         Date date;
         try {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
-            date = formatter.parse(row.attr(tag));
-
+            //SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+            //date = formatter.parse(row.attr(tag));
+            XMLGregorianCalendar cal = DatatypeFactory.newInstance().newXMLGregorianCalendar(row.attr(tag));
+            Calendar c3 = cal.toGregorianCalendar();
+            c3.clear(Calendar.MINUTE);
+            c3.clear(Calendar.HOUR);
+            c3.clear(Calendar.SECOND);
+            c3.clear(Calendar.MILLISECOND);
+            date=c3.getTime();
 
         } catch (Exception e) {
             date = null;
