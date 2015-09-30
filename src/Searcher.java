@@ -5,10 +5,7 @@
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -47,6 +44,11 @@ public class Searcher {
                         " CommentCount=" + doc.get("CommentCount") + " FavoriteCount=" + doc.get("FavoriteCount") + " CommunityOwnedDate=" + doc.get("CommunityOwnedDate"));
                 c = c + 1;
 
+                System.out.println("Tags: ");
+                for (IndexableField tag : doc.getFields("Tags")) {
+                    System.out.println(tag.stringValue());
+                }
+
                 Terms terms = reader.getTermVector(i, "Body"); //get terms vectors for one document and one field
                 System.out.println("Body Terms:");
                 if (terms != null && terms.size() > 0) {
@@ -56,7 +58,6 @@ public class Searcher {
                         final String keyword = term.utf8ToString();
                         long termFreq = termsEnum.totalTermFreq();
                         System.out.println("term: " + keyword + ", termFreq = " + termFreq);
-
                     }
                 }
 
@@ -69,7 +70,6 @@ public class Searcher {
                         final String keyword = t.utf8ToString();
                         long termFreq = termsEnum.totalTermFreq();
                         System.out.println("term: " + keyword + ", termFreq = " + termFreq);
-
                     }
                 }
             }

@@ -199,7 +199,7 @@ public class Utility {
         try {
             for (int year = 2008; year < 2016; year++) {
                 Query q = BooleanQueryAnd(SearchOwnerUserId(eid), SearchCreationDate(year));
-                TopDocs hits = searcher.search(q, 1);
+                TopDocs hits = searcher.search(q, 1);//retrieve more than one docs
                 //System.out.println(hits.totalHits + " total matching documents");
                 if (hits.totalHits > 0) {
                     activityYears.add(year);
@@ -244,6 +244,25 @@ public class Utility {
 
     public HashSet<Integer> getExpertsBYTagandYear(String Tag, Integer year) {
         Query q = BooleanQueryAnd(SearchCreationDate(year), SearchTag(Tag));
+        HashSet<Integer> ExpertIDs = new HashSet<Integer>();
+        try {
+            TopDocs hits = searcher.search(q, Integer.MAX_VALUE);
+            //System.out.println(hits.totalHits+" total matching documents");
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                ExpertIDs.add(Integer.parseInt(d.get("OwnerUserId")));
+            }
+            return ExpertIDs;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ExpertIDs;
+    }
+
+    public HashSet<Integer> getExpertIDsBYYear(Integer year) {
+        Query q = SearchCreationDate(year);
         HashSet<Integer> ExpertIDs = new HashSet<Integer>();
         try {
             TopDocs hits = searcher.search(q, Integer.MAX_VALUE);

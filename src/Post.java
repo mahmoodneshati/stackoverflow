@@ -40,7 +40,7 @@ public class Post {
     public Date CommunityOwnedDate;
 
 
-    public Post(String xmlLine/*, HashSet<String> tagset*/) {
+    public Post(String xmlLine, HashSet<String> tagset) {
         formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
         Elements row = Jsoup.parse(xmlLine).getElementsByTag("row");
@@ -61,8 +61,8 @@ public class Post {
         LastActivityDate = getDateValue(row, "LastActivityDate");
         ClosedDate = getDateValue(row, "LastActivityDate");
         Title = getStringValue(row, "Title");
-        Tags = getStringList(row, "Tags");
-        //Tags = (tagset == null) ? getStringList(row, "Tags") : getTagSet(tagset);
+        //Tags = getStringList(row, "Tags");
+        Tags = (tagset == null) ? getStringList(row, "Tags") : getTagSet(tagset);
         AnswerCount = getIntegerValue(row, "AnswerCount");
         CommentCount = getIntegerValue(row, "CommentCount");
         FavoriteCount = getIntegerValue(row, "FavoriteCount");

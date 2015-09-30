@@ -31,8 +31,9 @@ public class Main {
     int maxInMemoryDoc = 100000;
     int countInMemoryDoc = 0;
 
-    /*HashSet<Integer> postIDs;
+    HashSet<Integer> postIDs;
     HashMap<Integer,HashSet<String>> AnswerTags;
+
     public void getPostIDs(){
         try {
             BufferedReader reader = new BufferedReader(new FileReader("D:\\Sharif\\Project\\Lucene Index\\StackOverflow\\java_all.txt"));
@@ -60,7 +61,7 @@ public class Main {
             AnswerTags.put(answerID,set);
         }
         set.add(tag);
-    }*/
+    }
 
     public void index(String xmlFile) {
         try {
@@ -74,26 +75,21 @@ public class Main {
                         addToIndex(post.getLuceneDocument());
                     }*/
 
-                    //if (postIDs.contains(Integer.parseInt(row.attr("Id")))){
-                        //Post post = new Post(line,AnswerTags.get(Integer.parseInt(row.attr("Id"))));
-                        Post post = new Post(line);
+                    if (postIDs.contains(Integer.parseInt(row.attr("Id")))){
+                        Post post = new Post(line,AnswerTags.get(Integer.parseInt(row.attr("Id"))));
+                        //Post post = new Post(line);
                         addToIndex(post.getLuceneDocument());
-                    //}
+                    }
                 }
             }
             reader.close();
             closeIndex();
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     private void closeIndex() throws IOException {
-
-
         ramWriter.close();
         fileWriter.addIndexes(ramDir);
         ramDir.close();
@@ -103,7 +99,6 @@ public class Main {
     }
 
     private void addToIndex(Document document) throws IOException {
-
         if (countInMemoryDoc < maxInMemoryDoc) {
             // Add to Ram Memory and count up
             ramWriter.addDocument(document);
@@ -113,35 +108,26 @@ public class Main {
             // Merge Ram Memory and create a new ram memory
             ramWriter.addDocument(document);
             ramWriter.close();
-
-
             fileWriter.addIndexes(ramDir);
             ramDir.close();
             ramDir = new RAMDirectory();
             ramWriter = new IndexWriter(ramDir, new IndexWriterConfig(analyzer));
             countInMemoryDoc = 0;
-
         }
-
-
     }
 
     protected void setUp() throws IOException, ParseException {
         analyzer = new StandardAnalyzer();
-
-
         ramDir = new RAMDirectory();
-
         ramWriter = new IndexWriter(ramDir, new IndexWriterConfig(analyzer));
         fsDir = FSDirectory.open(Paths.get(indexPath));
         fileWriter = new IndexWriter(fsDir, new IndexWriterConfig(analyzer));
-
     }
 
     public Main(String indexPath) {
         this.indexPath = indexPath;
-        //postIDs=new HashSet<Integer>();
-        //AnswerTags=new HashMap<Integer,HashSet<String>>();
+        postIDs=new HashSet<Integer>();
+        AnswerTags=new HashMap<Integer,HashSet<String>>();
         try {
             setUp();
         } catch (IOException | ParseException e) {
@@ -150,11 +136,11 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException, ParseException {
-        Main m = new Main(".\\testindex");
-        //m.getPostIDs();
+        Main m = new Main(".\\JavaQAIndex");
+        m.getPostIDs();
 
-        //System.out.println(m.postIDs.size());
-        m.index("Posts1.xml");
-        //m.index("D:\\Sharif\\Project\\StackOverflow\\StackOverflow Data\\stackoverflow.com-Posts\\Posts.xml");
+        System.out.println(m.postIDs.size());
+        //m.index("Posts1.xml");
+        m.index("D:\\Sharif\\Project\\StackOverflow\\StackOverflow Data\\stackoverflow.com-Posts\\Posts.xml");
     }
 }

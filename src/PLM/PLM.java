@@ -3,13 +3,16 @@ package PLM;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -26,16 +29,162 @@ public class PLM {
     int AVERAGE_LENGTH = 3;
 
     public static void main(String args[]) {
+        PrintStream stdout = System.out;
+        try
+        {
+            PrintStream out = new PrintStream(new FileOutputStream("output.txt"));
+            System.setOut(out);
+        }
+        catch(IOException e)
+        {
+            System.out.println("\n\n\n\nSorry!\n\n\n\n");
+        }
         PLM p = new PLM();
-        HashSet<Integer> currentExpertIDs = p.u.getExpertsBYTagandYear("java-home",2008);
-        for(Integer s:currentExpertIDs)
-            System.out.println(s);
+
+        p.getAllTags2(2008);
+    }
+
+    public void getAllTags(int year) {
+        HashMap<String,Integer> Tags=new HashMap<String,Integer>();
+        System.out.println("Tag,Count");
+        Query query = u.SearchCreationDate(year);
+        try {
+            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                //System.out.println("Id: "+d.get("Id"));
+                for (IndexableField tag : d.getFields("Tags")) {
+                    if(tag.stringValue().length() != 0 ){
+                        String t = tag.stringValue();
+                        if(Tags.containsKey(t)){
+                            Integer c = Tags.get(t);
+                            Tags.put(t, c+1);
+                        }
+                        else
+                            Tags.put(t,1);
+                    }
+                }
+            }
+            for (String tag0:Tags.keySet()) {
+                System.out.println(tag0+","+Tags.get(tag0));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
+    public void getAllTags2(int year) {
+        HashMap<String,Integer> Tags=new HashMap<String,Integer>();
+        System.out.println("Tag,Count");
+        Query query = u.SearchCreationDate(year);
+        try {
+            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                for (IndexableField tag : d.getFields("Tags")) {
+                    System.out.println(tag.stringValue()+","+d.get("PostTypeId"));
+                }
+            }
+            for (String tag0:Tags.keySet()) {
+                System.out.println(tag0+","+Tags.get(tag0));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void getExpertIDswithCorrectAnswerCounts(){
+        try {
+            HashMap<Integer,Integer> ExpertIDs=new HashMap<Integer,Integer>();
+            BufferedReader reader = new BufferedReader(new FileReader("D:\\Sharif\\Project\\Lucene Index\\StackOverflow\\java_all.txt"));
+            String line;
+            reader.readLine();
+            while ((line = reader.readLine()) != null) {
+                String[] temp = line.split(",");
+                if(Integer.parseInt(temp[3])==1){
+                    try {
+                        if(ExpertIDs.containsKey(Integer.parseInt(temp[10]))) {
+                            Integer c=ExpertIDs.get(Integer.parseInt(temp[10]));
+                            ExpertIDs.put(Integer.parseInt(temp[10]), c+1);
+                        }
+                        else
+                            ExpertIDs.put(Integer.parseInt(temp[10]),1);
+                    } catch (Exception e) {}
+                }
+            }
+            reader.close();
+            System.out.println("Count,"+ExpertIDs.size());
+            for (Integer i:ExpertIDs.keySet()) {
+                System.out.println(i+","+ExpertIDs.get(i));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getExpertIDs(){
+        try {
+            HashSet<Integer> ExpertIDs=new HashSet<Integer>();
+            BufferedReader reader = new BufferedReader(new FileReader("D:\\Sharif\\Project\\Lucene Index\\StackOverflow\\java_all.txt"));
+            String line;
+            reader.readLine();
+            while ((line = reader.readLine()) != null) {
+                String[] temp = line.split(",");
+                try {
+                    ExpertIDs.add(Integer.parseInt(temp[9]));
+                    ExpertIDs.add(Integer.parseInt(temp[10]));
+                    ExpertIDs.add(Integer.parseInt(temp[11]));
+                    ExpertIDs.add(Integer.parseInt(temp[12]));
+                } catch (Exception e) {}
+            }
+            reader.close();
+            System.out.println("Count,"+ExpertIDs.size());
+            for (Integer i:ExpertIDs) {
+                System.out.println(i);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getExpertIDsByYear(){
+        HashSet<Integer> ExpertIDs = u.getExpertIDsBYYear(2015);
+        for (Integer i:ExpertIDs) {
+            System.out.println(i);
+        }
+    }
+
+    //test getCurrentYearTagProbabilityByExpertMLE(currentTag, eid, futureYear - 1);
+    public void test(){
+        int year=2008;
+        System.out.println("CurrentTag,ExpertID,Year,Probability");
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("D:\\Sharif\\Project\\Lucene Index\\StackOverflow\\ExpertIDs08.csv"));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                //System.out.println(line);
+                Integer eid = Integer.parseInt(line);
+                HashSet<String> currentYearTags = getTags(2008, eid);
+                System.out.println(currentYearTags.toString());
+                for (String tag:currentYearTags){
+                    double output = getCurrentYearTagProbabilityByExpertMLE(tag,eid,2008);
+                    System.out.println(tag+","+eid+","+year+","+output);
+                }
+            }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public PLM() {
         try {
-            IndexDir = "index2";
+            IndexDir = "JavaQAIndex";
             reader = DirectoryReader.open(FSDirectory.open(Paths.get(IndexDir)));
             searcher = new IndexSearcher(reader);
             u = new Utility(IndexDir);
@@ -82,7 +231,6 @@ public class PLM {
             output += getFutureTagProbabilityByExpertAndCurrentTag(futureTag, currentTag, eid, futureYear - 1)
                     * getCurrentYearTagProbabilityByExpertMLE(currentTag, eid, futureYear - 1);
         }
-
         return output;
     }
 
@@ -145,8 +293,8 @@ public class PLM {
     }
 
     private int tagUnionByAuthors(String futureTag, String currentTag, int CurrentYear) {
-        HashSet<Integer> currentExpertIDs = u.getExpertsBYTagandYear(currentTag,CurrentYear);
-        HashSet<Integer> futureExpertIDs = u.getExpertsBYTagandYear(futureTag,CurrentYear);
+        HashSet<Integer> currentExpertIDs = u.getExpertsBYTagandYear(currentTag, CurrentYear);
+        HashSet<Integer> futureExpertIDs = u.getExpertsBYTagandYear(futureTag, CurrentYear);
         currentExpertIDs.addAll(futureExpertIDs);
         return currentExpertIDs.size();
     }
@@ -222,12 +370,8 @@ public class PLM {
 
 
     private HashSet<String> getTags(int year) {
-        //The validity of this function had been checked.
         HashSet<String> Tags = new HashSet<String>();
-        String delims = "[<>]";
-        BytesRef lowerBR = new BytesRef(String.valueOf(year));
-        BytesRef upperBR = new BytesRef(String.valueOf(year + 1));
-        Query query = new TermRangeQuery("CreationDate", lowerBR, upperBR, true, true);
+        Query query = u.SearchCreationDate(year);
         try {
             TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
             ScoreDoc[] ScDocs = hits.scoreDocs;
@@ -235,9 +379,9 @@ public class PLM {
                 int docId = ScDocs[i].doc;
                 Document d = searcher.doc(docId);
                 //System.out.println("Id: "+d.get("Id"));
-                for (String tag : d.get("Tags").split(delims)) {
-                    if(tag.length() != 0 )
-                        Tags.add(tag);
+                for (IndexableField tag : d.getFields("Tags")) {
+                    if(tag.stringValue().length() != 0 )
+                        Tags.add(tag.stringValue());
                 }
             }
             return Tags;
@@ -247,4 +391,25 @@ public class PLM {
         return null;
     }
 
+    private HashSet<String> getTags(int year,Integer eid) {
+        HashSet<String> Tags = new HashSet<String>();
+        Query query = u.BooleanQueryAnd(u.SearchCreationDate(year), u.SearchOwnerUserId(eid));
+        try {
+            TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                //System.out.println("Id: "+d.get("Id"));
+                for (IndexableField tag : d.getFields("Tags")) {
+                    if(tag.stringValue().length() != 0 )
+                        Tags.add(tag.stringValue());
+                }
+            }
+            return Tags;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
