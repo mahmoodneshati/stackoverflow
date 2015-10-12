@@ -1,6 +1,5 @@
 package PLM;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -10,7 +9,6 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -170,20 +168,22 @@ public class PLM2 {
     }
 
     private double tagSimilarity(String futureTag, String currentTag, int currentYear) {
-        //TODO
-        return 0;
+        double similarity = getSimilarityFromIndex(futureTag, currentTag, currentYear);
+        if(similarity == -1.0)
+            return 0;
+        return similarity;
     }
 
     private double tagPopularity(String futureTag, int currentYear) {
-        double output = getPopularityFromIndex(futureTag, currentYear);
+        Integer N_t = u.getDocCount(u.SearchCreationDate(currentYear));
+        double output = (1.0 *getPopularityFromIndex(futureTag, currentYear))/N_t;
         if( output == -1){
-            Integer N_t = u.getDocCount(u.SearchCreationDate(currentYear));
             Integer N_at1_t = u.getDocCount(
                     u.BooleanQueryAnd(
                             u.SearchCreationDate(currentYear), u.SearchTag(futureTag)));
             output = (1.0 * N_at1_t) / N_t;
         }
-        return 0;
+        return output;
     }
 
     private double getConservativenessProbability(Integer eid) {
@@ -223,6 +223,29 @@ public class PLM2 {
     }
 
     //---------------------------------
+
+    private Double getSimilarityFromIndex(String futureTag, String currentTag, int currentYear) {
+        try {
+            IndexReader reader2 = DirectoryReader.open(FSDirectory.open(Paths.get("SIndex")));
+            IndexSearcher searcher2 = new IndexSearcher(reader2);
+            BooleanQuery query = new BooleanQuery();
+            query.add(NumericRangeQuery.newIntRange("Year", currentYear, currentYear, true, true), BooleanClause.Occur.MUST);
+            query.add(new TermQuery(new Term("Tag1", futureTag)), BooleanClause.Occur.MUST);
+            query.add(new TermQuery(new Term("Tag2", currentTag)), BooleanClause.Occur.MUST);
+
+            TopDocs hits = searcher2.search(query, 1);
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher2.doc(docId);
+                return Double.parseDouble(d.get("Similarity"));
+            }
+            return -1.0;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1.0;
+    }
 
     private Integer getPopularityFromIndex(String tag, int currentYear) {
         try {
@@ -292,8 +315,28 @@ public class PLM2 {
         return null;
     }
 
+    /**
+     * Get top similar tags for given year
+     * @param futureYear
+     * @param topCount  number of tags which we need
+     * @return
+     */
     private HashSet<String> getTopTagsSimilar(int futureYear, int topCount) {
-        //TODO
+        try {
+            HashSet<String> TopSimilarTags = new HashSet<String>();
+            String sCurrentLine;
+            BufferedReader br = new BufferedReader(new FileReader("similarity" + futureYear + ".txt"));
+            while ((sCurrentLine = br.readLine()) != null) {
+                if (TopSimilarTags.size() > topCount)
+                    break;
+                String[] temp = sCurrentLine.split(",");
+                TopSimilarTags.add(temp[0]);
+                TopSimilarTags.add(temp[1]);
+            }
+            return TopSimilarTags;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

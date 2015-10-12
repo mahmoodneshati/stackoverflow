@@ -36,7 +36,7 @@ public class Conservativeness {
         Conservativeness c = new Conservativeness();
 
         long start = System.currentTimeMillis();
-        c.start1("JavaQAIndex", "*:*");
+        c.start("JavaQAIndex", "*:*");
         long end = System.currentTimeMillis();
         System.out.println("Total RunTime: "+(end-start));
     }
@@ -44,26 +44,6 @@ public class Conservativeness {
     public Conservativeness() {
         u = new Utility("JavaQAIndex");
         p = new PLM();
-    }
-
-    public void start1(String indexDir, String q) {
-        try {
-            IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDir)));
-            Analyzer analyzer = new StandardAnalyzer();
-            HashSet<Integer> ExpertIDs = new HashSet<Integer>();
-            int c = 0;
-            for (int i = 0; i < reader.maxDoc(); i++) {
-                Document doc = reader.document(i);
-                ExpertIDs.add(Integer.parseInt(doc.get("OwnerUserId")));
-                ExpertIDs.add(Integer.parseInt(doc.get("LastEditorUserId")));
-            }
-            reader.close();
-            System.out.println("Expert Count: " + ExpertIDs.size());
-            for(Integer e: ExpertIDs)
-                getConservativenessProbability(e);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void start(String indexDir, String q) {
