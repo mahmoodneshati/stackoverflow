@@ -5,10 +5,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 
 import java.io.*;
@@ -57,7 +55,6 @@ public class PLM2 {
 
         long start = System.currentTimeMillis();
         //p.start("java");
-
         long end = System.currentTimeMillis();
         System.out.println("Total RunTime: " + (end - start));
 
@@ -86,7 +83,10 @@ public class PLM2 {
             P_at_e.put(currentTag,getCurrentYearTagProbabilityByExpertMLE(currentTag, eid, (futureYear-1),N_e_t));
 
         //calculating conservativeness of specified expert
-        conservativeness = getConservativenessProbability(eid, (futureYear-1));
+        conservativeness = getConservativenessProbabilityFromIndex(eid);
+        if (conservativeness == -1) {
+            conservativeness = getConservativenessProbability(eid);
+        }
 
         return 0;
     }
@@ -175,13 +175,102 @@ public class PLM2 {
     }
 
     private double tagPopularity(String futureTag, int currentYear) {
-        //TODO
+        double output = getPopularityFromIndex(futureTag, currentYear);
+        if( output == -1){
+            Integer N_t = u.getDocCount(u.SearchCreationDate(currentYear));
+            Integer N_at1_t = u.getDocCount(
+                    u.BooleanQueryAnd(
+                            u.SearchCreationDate(currentYear), u.SearchTag(futureTag)));
+            output = (1.0 * N_at1_t) / N_t;
+        }
         return 0;
+    }
+
+    private double getConservativenessProbability(Integer eid) {
+        double output = 0;
+        ArrayList<Integer> activityYears = u.getActivityYearsByExpertID(eid);
+
+        HashMap<Integer,HashSet> TagMap = new HashMap<Integer,HashSet>();
+        for (int i = 0; i < activityYears.size(); i++) {
+            int year = activityYears.get(i);
+            HashSet<String> A = getTagsByAuthorAndYear(year, eid);
+            TagMap.put(year, A);
+        }
+
+        int count = 0;
+        for (int i = 1; i < activityYears.size(); i++) {
+            output += getConservativenessProbabilityByYear(eid, activityYears.get(i),activityYears.get(i-1),TagMap);
+            count++;
+        }
+        output = (count == 0 ? 0.5 : output / count);
+        return output;
+    }
+
+    private double getConservativenessProbabilityByYear(Integer eid, int year, int lastYear, HashMap<Integer, HashSet> TagMap) {
+        double output;
+
+        HashSet<String> A_t = TagMap.get(year);
+        HashSet<String> A_t_1 = TagMap.get(lastYear);
+
+        HashSet<String> IntersectionSet = new HashSet<>();
+        IntersectionSet.addAll(A_t);
+        IntersectionSet.retainAll(A_t_1);
+
+        A_t_1.addAll(A_t);
+
+        output = (A_t_1.size() == 0 ? 0 : (IntersectionSet.size() * 1.0) / A_t_1.size());
+        return output;
     }
 
     //---------------------------------
 
+    private Integer getPopularityFromIndex(String tag, int currentYear) {
+        try {
+            IndexReader reader2 = DirectoryReader.open(FSDirectory.open(Paths.get("PIndex")));
+            IndexSearcher searcher2 = new IndexSearcher(reader2);
+            BooleanQuery query = new BooleanQuery();
+            query.add(NumericRangeQuery.newIntRange("Year", currentYear, currentYear, true, true), BooleanClause.Occur.MUST);
+            query.add(new TermQuery(new Term("Tag", tag)), BooleanClause.Occur.MUST);
 
+            TopDocs hits = searcher2.search(query, 1);
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher2.doc(docId);
+                return Integer.parseInt(d.get("Popularity"));
+            }
+            return -1;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    private double getConservativenessProbabilityFromIndex(Integer eid) {
+        try {
+            IndexReader reader2 = DirectoryReader.open(FSDirectory.open(Paths.get("CIndex")));
+            IndexSearcher searcher2 = new IndexSearcher(reader2);
+            Query query = NumericRangeQuery.newIntRange("ExpertID", eid, eid, true, true);
+            TopDocs hits = searcher2.search(query, 1);
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher2.doc(docId);
+                return Double.parseDouble(d.get("Conservativeness"));
+            }
+            return -1;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    /**
+     * Get top popular tags for given year
+     * @param futureYear
+     * @param topCount  number of popular tags which we need
+     * @return
+     */
     private HashSet<String> getTopTagsPopular(int futureYear, int topCount) {
         try {
 
@@ -206,11 +295,6 @@ public class PLM2 {
     private HashSet<String> getTopTagsSimilar(int futureYear, int topCount) {
         //TODO
         return null;
-    }
-
-    private double getConservativenessProbability(Integer eid, int i) {
-        //TODO
-        return 0;
     }
 
     /**
@@ -251,6 +335,28 @@ public class PLM2 {
         Query query = u.BooleanQueryAnd(u.SearchCreationDate(year), u.SearchOwnerUserId(eid));
         try {
             TopDocs hits = searcher.search(query, Integer.MAX_VALUE);
+            ScoreDoc[] ScDocs = hits.scoreDocs;
+            for (int i = 0; i < ScDocs.length; ++i) {
+                int docId = ScDocs[i].doc;
+                Document d = searcher.doc(docId);
+                //System.out.println("Id: "+d.get("Id"));
+                for (IndexableField tag : d.getFields("Tags")) {
+                    if(tag.stringValue().length() != 0 )
+                        Tags.add(tag.stringValue());
+                }
+            }
+            return Tags;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    HashSet<String> getTagsByAuthorAndYear(int year, Integer eid) {
+        HashSet<String> Tags = new HashSet<String>();
+        Query Q_Author_Year = u.BooleanQueryAnd(u.SearchCreationDate(year), u.SearchOwnerUserId(eid));
+        try {
+            TopDocs hits = searcher.search(Q_Author_Year, Integer.MAX_VALUE);
             ScoreDoc[] ScDocs = hits.scoreDocs;
             for (int i = 0; i < ScDocs.length; ++i) {
                 int docId = ScDocs[i].doc;
