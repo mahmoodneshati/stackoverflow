@@ -24,7 +24,7 @@ public class Similarity {
         PrintStream stdout = System.out;
         try
         {
-            PrintStream out = new PrintStream(new FileOutputStream("similarity2009.txt"));
+            PrintStream out = new PrintStream(new FileOutputStream("similarity2015-.txt"));
             System.setOut(out);
         }
         catch(IOException e)
@@ -34,7 +34,7 @@ public class Similarity {
 
         Similarity s = new Similarity();
         long start = System.currentTimeMillis();
-        s.start(2009);
+        s.start(2015);
         long end = System.currentTimeMillis();
         System.out.println("Total RunTime: " + (end - start));
 
@@ -55,20 +55,20 @@ public class Similarity {
                     String tag2 = TagList.get(j);
                     double sim = tagSimilarity(tag1, tag2, year);
                     if (sim != 0.0){
-                       //System.out.println(tag1 + "," + tag2 + "," + year + "," + sim);
-                        SimResult.put(tag1 + "," + tag2 + "," + year + ",",sim);
+                       System.out.println(tag1 + "," + tag2 + "," + year + "," + sim);
+                        //SimResult.put(tag1 + "," + tag2 + "," + year + ",",sim);
                     }
             }
         }
 
-        ValueComparator bvc =  new ValueComparator(SimResult);
+        /*ValueComparator bvc =  new ValueComparator(SimResult);
         TreeMap<String,Double> sorted_map = new TreeMap<String,Double>(bvc);
         sorted_map.putAll(SimResult);
 
         for(int i=0; i<sorted_map.size(); i++){
             String key = (String)sorted_map.keySet().toArray()[i];
             System.out.println(key+SimResult.get(key));
-        }
+        }*/
     }
 
     private double tagSimilarity(String futureTag, String currentTag, int CurrentYear) {
